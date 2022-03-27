@@ -7,7 +7,6 @@ public with sharing class PleasePoll implements Queueable, Database.AllowsCallou
     public PleasePoll(PollingParameters parameters) {
         this.parameters = parameters;
     }
-
     
     public void execute(QueueableContext context) {
         HttpRequest request = new HttpRequest();
