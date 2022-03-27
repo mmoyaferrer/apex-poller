@@ -1,3 +1,3 @@
-public interface AfterPollI {
+public interface PollFinishCallbackI {
     void execute(Object httpResponse);
 }

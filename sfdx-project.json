@@ -1,8 +1,11 @@
 {
   "packageDirectories": [
     {
-      "path": "sfdx-source",
+      "path": "sfdx-source/main",
       "default": true
+    },
+    {
+      "path": "sfdx-source/sample"
     }
   ],
   "name": "PleasePoll",

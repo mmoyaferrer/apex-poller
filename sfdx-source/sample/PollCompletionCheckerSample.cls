@@ -1,4 +1,4 @@
-public with sharing class SampleCompletionChecker implements CheckCompletionI {
+public with sharing class PollCompletionCheckerSample implements PollCompletionCheckerI {
     public Boolean execute(Object httpResponse) {
         Account acc = [SELECT Industry FROM Account WHERE Name = 'Sample'];
 

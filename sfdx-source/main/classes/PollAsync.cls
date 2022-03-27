@@ -46,13 +46,13 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
     private Boolean checkCompleted(Object httpResponseBody) {
         Type callbackClass = typeByName(parameters.checkCompletionClass);
-        return ((CheckCompletionI) callbackClass.newInstance()).execute(httpResponseBody);
+        return ((PollCompletionCheckerI) callbackClass.newInstance()).execute(httpResponseBody);
     }
 
     private void invokeCallback(Object httpResponseBody) {
         if (String.isNotBlank(parameters.callbackClass)) {
             Type callbackClass = typeByName(parameters.callbackClass);
-            ((AfterPollI) callbackClass.newInstance()).execute(httpResponseBody);
+            ((PollFinishCallbackI) callbackClass.newInstance()).execute(httpResponseBody);
         }
     }
 
@@ -63,7 +63,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Type result = Type.forName(namespace, className);
 
         if (result == null) {
-            throw new ApplicationException('Invalid class ' + fullClassName);
+            throw new PollException('Invalid class ' + fullClassName);
         }
 
         return result;

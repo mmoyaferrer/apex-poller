@@ -4,8 +4,8 @@ String endpoint = 'https://api.nasa.gov/planetary/apod?api_key=zJjSDvbtn2wDdkDaX
 PollConfiguration configuration = new PollConfiguration();
 configuration.method = method;
 configuration.endpoint = endpoint;
-configuration.checkCompletionClass = 'SampleCompletionChecker';
-configuration.callbackClass = 'SampleAfterPollAction';
+configuration.checkCompletionClass = 'PollCompletionCheckerSample';
+configuration.callbackClass = 'PollCallbackSample';
 
 new Poller(configuration).start();
 
