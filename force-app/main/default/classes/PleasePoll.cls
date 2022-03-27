@@ -39,11 +39,7 @@ public with sharing class PleasePoll implements Queueable, Database.AllowsCallou
         String min = String.valueOf(Datetime.now().minute()); 
         String second = String.valueOf(Datetime.now().addSeconds(10).second());
 
-        //parse to cron expression
-        // Seconds Minutes Hours Day_of_month Month Day_of_week Optional_year
         String nextFireTime = second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
-
-        System.debug(nextFireTime);
 
         System.schedule('Polling - ' + nextFireTime, nextFireTime, initialScheduledPoll);
     }
