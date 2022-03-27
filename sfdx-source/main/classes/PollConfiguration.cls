@@ -1,4 +1,4 @@
-public with sharing class PollingParameters {
+public with sharing class PollConfiguration {
     public String method;
     public String endpoint;
 

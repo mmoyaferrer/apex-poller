@@ -1,10 +1,10 @@
-public with sharing class PleasePoll implements Queueable, Database.AllowsCallouts {
+public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
    
-    private PollingParameters parameters;
+    private PollConfiguration parameters;
 
     // PUBLIC
     
-    public PleasePoll(PollingParameters parameters) {
+    public PollAsync(PollConfiguration parameters) {
         this.parameters = parameters;
     }
     
@@ -30,7 +30,7 @@ public with sharing class PleasePoll implements Queueable, Database.AllowsCallou
     // PRIVATE
 
     private void scheduleAgain() {
-        PleasePollAgain initialScheduledPoll = new PleasePollAgain(parameters);
+        Poller initialScheduledPoll = new Poller(parameters);
 
         String year = String.valueOf(Datetime.now().year());
         String month = String.valueOf(Datetime.now().month());
