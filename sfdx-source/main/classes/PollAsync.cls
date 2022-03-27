@@ -32,6 +32,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     private void scheduleAgain() {
         Poller initialScheduledPoll = new Poller(parameters);
 
+        // @TODO: Add incremental polling
         String year = String.valueOf(Datetime.now().year());
         String month = String.valueOf(Datetime.now().month());
         String day = String.valueOf(Datetime.now().day());

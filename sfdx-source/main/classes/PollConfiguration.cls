@@ -4,4 +4,6 @@ public with sharing class PollConfiguration {
 
     public String checkCompletionClass;
     public String callbackClass;
+
+    // @TODO: Add incremental polling configuration
 }
