@@ -1,17 +1,17 @@
 public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
    
-    private PollConfiguration parameters;
+    private PollConfiguration configuration;
 
     // PUBLIC
     
-    public PollAsync(PollConfiguration parameters) {
-        this.parameters = parameters;
+    public PollAsync(PollConfiguration configuration) {
+        this.configuration = configuration;
     }
     
     public void execute(QueueableContext context) {
         HttpRequest request = new HttpRequest();
-        request.setMethod(parameters.method);
-        request.setEndpoint(parameters.endpoint);
+        request.setMethod(configuration.method);
+        request.setEndpoint(configuration.endpoint);
         HttpResponse response = new Http().send(request);
 
         Object httpResponseBody = (Object) JSON.deserializeUntyped(response.getBody());
@@ -30,7 +30,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     // PRIVATE
 
     private void scheduleAgain() {
-        Poller initialScheduledPoll = new Poller(parameters);
+        Poller initialScheduledPoll = new Poller(configuration);
 
         // @TODO: Add incremental polling
         String year = String.valueOf(Datetime.now().year());
@@ -42,17 +42,23 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
         String nextFireTime = second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
 
-        System.schedule('Polling - ' + nextFireTime, nextFireTime, initialScheduledPoll);
+        try {
+            System.schedule('Polling - ' + nextFireTime, nextFireTime, initialScheduledPoll);
+        } catch (AsyncException ex) {
+            if (!Test.isRunningTest()) {
+                throw ex;
+            }
+        }
     }
 
     private Boolean checkCompleted(Object httpResponseBody) {
-        Type callbackClass = typeByName(parameters.checkCompletionClass);
+        Type callbackClass = typeByName(configuration.checkCompletionClass);
         return ((PollCompletionCheckerI) callbackClass.newInstance()).execute(httpResponseBody);
     }
 
     private void invokeCallback(Object httpResponseBody) {
-        if (String.isNotBlank(parameters.callbackClass)) {
-            Type callbackClass = typeByName(parameters.callbackClass);
+        if (String.isNotBlank(configuration.callbackClass)) {
+            Type callbackClass = typeByName(configuration.callbackClass);
             ((PollFinishCallbackI) callbackClass.newInstance()).execute(httpResponseBody);
         }
     }
