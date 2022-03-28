@@ -1,11 +1,13 @@
 public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
    
     private PollConfiguration configuration;
+    private Integer iteration;
 
     // PUBLIC
     
-    public PollAsync(PollConfiguration configuration) {
+    public PollAsync(PollConfiguration configuration, Integer iteration) {
         this.configuration = configuration;
+        this.iteration = iteration;
     }
     
     public void execute(QueueableContext context) {
@@ -30,25 +32,60 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     // PRIVATE
 
     private void scheduleAgain() {
-        Poller initialScheduledPoll = new Poller(configuration);
-
-        // @TODO: Add incremental polling
-        String year = String.valueOf(Datetime.now().year());
-        String month = String.valueOf(Datetime.now().month());
-        String day = String.valueOf(Datetime.now().day());
-        String hour = String.valueOf(Datetime.now().hour());
-        String min = String.valueOf(Datetime.now().minute()); 
-        String second = String.valueOf(Datetime.now().addSeconds(10).second());
-
-        String nextFireTime = second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
+        // @TODO: Manage timeout
+        // if (iteration.totalTime > configuration.timeout) {
+        //     throw new PollException('Polling Timeout reached');
+        // }
 
         try {
-            System.schedule('Polling - ' + nextFireTime, nextFireTime, initialScheduledPoll);
+            String nextFireCron = calculateNextFireCron(iteration, configuration);
+            
+            iteration++;
+            Poller scheduledPoll = new Poller(configuration, iteration);
+
+            System.schedule('Polling - ' + nextFireCron, nextFireCron, scheduledPoll);
         } catch (AsyncException ex) {
             if (!Test.isRunningTest()) {
                 throw ex;
             }
         }
+    }
+
+    private String calculateNextFireCron(Integer iteration, PollConfiguration configuration) {
+        Datetime nextTime = Datetime.now();
+
+        System.debug('iteration: ' + iteration);
+        System.debug('current time: ' + nextTime);
+
+        if (configuration.incremDelay != null) {
+            if (iteration <= configuration.incremDelay.initialDelayIterations) {
+            nextTime = nextTime.addSeconds(configuration.incremDelay.initialDelay);
+            } else if (iteration <= configuration.incremDelay.initialDelayIterations + configuration.incremDelay.middleDelayIterations) {
+                nextTime = nextTime.addSeconds(configuration.incremDelay.middleDelay);
+            } else {
+                nextTime = nextTime.addSeconds(configuration.incremDelay.finalDelay);
+            }
+        } else if (configuration.staticDelay != null) {
+            nextTime = nextTime.addSeconds(configuration.staticDelay);
+        } else {
+            throw new PollException('Neither static delay or incremental delay are defined for PollConfiguration');
+        }
+
+        System.debug('next time: ' + nextTime);
+
+
+        return cronFrom(nextTime);
+    }
+
+    private String cronFrom(Datetime dateItem) {
+        String year = String.valueOf(dateItem.year());
+        String month = String.valueOf(dateItem.month());
+        String day = String.valueOf(dateItem.day());
+        String hour = String.valueOf(dateItem.hour());
+        String min = String.valueOf(dateItem.minute());
+        String second = String.valueOf(dateItem.second());
+
+        return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
     }
 
     private Boolean checkCompleted(Object httpResponseBody) {

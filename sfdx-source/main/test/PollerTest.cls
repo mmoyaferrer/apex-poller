@@ -44,6 +44,10 @@ private class PollerTest {
         result.method = 'GET';
         result.callbackClass = 'MockCallback';
         result.checkCompletionClass = 'MockCompletionChecker';
+        result.incremDelay = new PollConfiguration.IncrementalDelay()
+            .withInitialIterations(1, 1)
+            .withMiddleIterations(5, 1)
+            .withFinalIterations(10);
 
         return result;
     }

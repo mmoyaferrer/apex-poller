@@ -10,7 +10,7 @@ private class PollAsyncTest {
 
         // Exercise
         Test.startTest();
-        System.enqueueJob(new PollAsync(configuration));
+        System.enqueueJob(new PollAsync(configuration, 1));
         Test.stopTest();
 
         // Verify
@@ -30,7 +30,7 @@ private class PollAsyncTest {
 
         // Exercise
         Test.startTest();
-        System.enqueueJob(new PollAsync(configuration));
+        System.enqueueJob(new PollAsync(configuration, 1));
         Test.stopTest();
 
         // Verify
@@ -47,6 +47,10 @@ private class PollAsyncTest {
         result.method = 'GET';
         result.callbackClass = 'MockCallback';
         result.checkCompletionClass = 'MockCompletionChecker';
+        result.incremDelay = new PollConfiguration.IncrementalDelay()
+            .withInitialIterations(1, 1)
+            .withMiddleIterations(5, 1)
+            .withFinalIterations(10);
 
         return result;
     }

@@ -8,6 +8,8 @@ public with sharing class PollConfiguration {
     public Integer staticDelay;
     public IncrementalDelay incremDelay;
 
+    public Integer timeout;
+
     public PollConfiguration withStaticDelay(Integer delay) {
         staticDelay = delay;
 
@@ -21,14 +23,13 @@ public with sharing class PollConfiguration {
     }
 
     public class IncrementalDelay {
-        private Integer initialDelay;
-        private Integer initialDelayIterations;
+        public Integer initialDelay;
+        public Integer initialDelayIterations;
 
-        private Integer middleDelay;
-        private Integer middleDelayIterations;
+        public Integer middleDelay;
+        public Integer middleDelayIterations;
         
-        private Integer finalDelay;
-        private Integer finalDelayIterations;
+        public Integer finalDelay;
 
         public IncrementalDelay withInitialIterations(Integer seconds, Integer iterationsCount) {
             initialDelay = seconds;
@@ -44,9 +45,8 @@ public with sharing class PollConfiguration {
             return this;
         }
 
-        public IncrementalDelay withFinalIterations(Integer seconds, Integer iterationsCount) {
+        public IncrementalDelay withFinalIterations(Integer seconds) {
             finalDelay = seconds;
-            finalDelayIterations = iterationsCount;
 
             return this;
         }

@@ -3,6 +3,9 @@
     {
       "path": "sfdx-source/main",
       "default": true
+    },
+    {
+      "path": "sfdx-source/samples"
     }
   ],
   "name": "PleasePoll",
