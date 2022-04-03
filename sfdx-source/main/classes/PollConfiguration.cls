@@ -4,7 +4,7 @@ public with sharing class PollConfiguration {
     public String callbackClass {get; private set;}
     public Integer staticDelay {get; private set;}
     public IncrementalDelay incremDelay {get; private set;}
-    public Datetime startTime{get; private set;};
+    public Datetime startTime{get; private set;}
     public Integer timeout {get; private set;}
 
     public PollConfiguration withPollAction(String className) {
