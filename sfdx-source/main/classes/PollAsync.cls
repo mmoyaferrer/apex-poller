@@ -11,25 +11,37 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     }
     
     public void execute(QueueableContext context) {
-        HttpRequest request = new HttpRequest();
-        request.setMethod(configuration.method);
-        request.setEndpoint(configuration.endpoint);
-        HttpResponse response = new Http().send(request);
-
-        Object httpResponseBody = (Object) JSON.deserializeUntyped(response.getBody());
-
-        Boolean completed = checkCompleted(httpResponseBody);
+        Object pollResponse = invokeClass(configuration.pollClass, null);
+        Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
 
         System.debug('completed?: ' + completed);
 
         if (completed) {
-            invokeCallback(httpResponseBody);
+            invokeClass(configuration.callbackClass, pollResponse);
         } else {
             scheduleAgain();
         }     
     }
 
     // PRIVATE
+
+    private Object invokeClass(String className, Object args) {
+        Type callbackClass = typeByName(className);
+        return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{'default' => args});
+    }
+
+    private Type typeByName(String fullClassName) {
+        String namespace = fullClassName.contains('.') ? fullClassName.substringBefore('.') : '';
+        String className = fullClassName.contains('.') ? fullClassName.substringAfter('.') : fullClassName;
+
+        Type result = Type.forName(namespace, className);
+
+        if (result == null) {
+            throw new PollException('Invalid class ' + fullClassName);
+        }
+
+        return result;
+    }
 
     private void scheduleAgain() {
         // @TODO: Manage timeout
@@ -86,32 +98,5 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         String second = String.valueOf(dateItem.second());
 
         return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
-    }
-
-    private Boolean checkCompleted(Object httpResponseBody) {
-        Type callbackClass = typeByName(configuration.checkCompletionClass);
-        Object callableResponse = ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{'default' => httpResponseBody});
-
-        return (Boolean) callableResponse;
-    }
-
-    private void invokeCallback(Object httpResponseBody) {
-        if (String.isNotBlank(configuration.callbackClass)) {
-            Type callbackClass = typeByName(configuration.callbackClass);
-            ((Callable) callbackClass.newInstance()).call('', new Map<String,Object>{'default' => httpResponseBody});
-        }
-    }
-
-    private Type typeByName(String fullClassName) {
-        String namespace = fullClassName.contains('.') ? fullClassName.substringBefore('.') : '';
-        String className = fullClassName.contains('.') ? fullClassName.substringAfter('.') : fullClassName;
-
-        Type result = Type.forName(namespace, className);
-
-        if (result == null) {
-            throw new PollException('Invalid class ' + fullClassName);
-        }
-
-        return result;
     }
 }

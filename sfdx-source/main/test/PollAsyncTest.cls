@@ -43,8 +43,7 @@ private class PollAsyncTest {
     private static PollConfiguration createPollConfiguration() {
         PollConfiguration result = new PollConfiguration();
 
-        result.endpoint = 'https://mock.com';
-        result.method = 'GET';
+        result.pollClass = 'MockPollAction';
         result.callbackClass = 'MockCallback';
         result.checkCompletionClass = 'MockCompletionChecker';
         result.incremDelay = new PollConfiguration.IncrementalDelay()
