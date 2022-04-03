@@ -29,13 +29,12 @@ In the sample:
 
 ## How it works?
 
-### TL;DR
-
 This framework makes use of schedulable/queuable apex jobs to:
 - Execute the provided polling logic
 - Check if the poll has completed
 - Re-schedule itself if not completed, by following an injected static/incremental delay pattern.
-### Specific details
+
+## How can I use it?
 
 **Given** the consumer has initialised a Poll Configuration record, with the following apex classes which implement the [`Callable` interface](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_interface_System_Callable.htm):
 
