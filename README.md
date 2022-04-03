@@ -20,12 +20,12 @@ In the sample:
 - Injection of apex logic by the consumer (through classes names) in order to provide:
     - Polling action
     - Polling status check
-    - Polling finisher action
-- Static or Incremental delay
-    - In case of static delay, specifying it in seconds
+    - Polling finisher action, also referred as Polling Callback.
+- Specification of Static or Incremental delay
+    - In case of static delay, nº of seconds
     - In case of incremental delay, specifying:
-        - Delay (seconds) and number of iteration per each first group of polls and second group of polls
-        - Delay (seconds) for rest of polls following first & second group
+        - Nº seconds & number of iteration per each first group of polls and second group of polls
+        - Nº seconds for rest of polls following first & second group
 
 ## How it works?
 
@@ -37,17 +37,19 @@ This framework makes use of schedulable/queuable apex jobs to:
 - Re-schedule itself if not completed, by following an injected static/incremental delay pattern.
 ### Specific details
 
-Given the consumer has initialised a Poll Configuration record, with the following:
+**Given** the consumer has initialised a Poll Configuration record, with the following apex classes which implement the [`Callable` interface](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_interface_System_Callable.htm):
 
-- 1) A polling action class, which implements the `Callable` interface, and returns the action response as `Map<String, Object>{'default' => response}`
-- 2) A polling status check class, which implements the `Callable` interface, and returns a boolean indicating if the response of 1) is now the final/expected to end the poll, being this boolean wrapped in the callable response `Map<String, Object>{'default' => pollCompleted}`
-- 3) A polling finisher action (polling callback), which implements the `Callable` interface, whose logic provides the behaviour to run when the polling has successfully finished
+- 1) A polling action class, which returns a response as `Map<String, Object>{'default' => response}`
+- 2) A polling status check class, which returns a boolean indicating if the response of 1) is now the final/expected to end the poll OR not, being this boolean wrapped in the callable response as `Map<String, Object>{'default' => pollCompleted}`
+- 3) A polling finisher action (polling callback), whose logic provides the behaviour to run when the polling has successfully finished
+
+**Given** the consumer has specified the following in the Poll Configuration record:
 - 4) Static OR Incremental delay
 - 5) Polling Timeout seconds
 
-When the consumer start the polling process, by usage of the `Poller` class
+**When** the consumer start the polling process, by usage of the `Poller` class
 
-Then a queueable apex job will start, and will:
+**Then** a queueable apex job will start, and will:
     - Execute the logic provided in the polling action class
     - Check if the response contains the expected data (logic provided in 2)):
         - If yes -> Will call the polling callback and finish the process
