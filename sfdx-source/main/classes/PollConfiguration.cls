@@ -1,21 +1,46 @@
 public with sharing class PollConfiguration {
-    public String pollClass;
-    public String checkCompletionClass;
-    public String callbackClass;
+    public String pollClass {get; private set;}
+    public String checkCompletionClass {get; private set;}
+    public String callbackClass {get; private set;}
 
-    public Integer staticDelay;
-    public IncrementalDelay incremDelay;
+    public Integer staticDelay {get; private set;}
+    public IncrementalDelay incremDelay {get; private set;}
 
-    public Integer timeout;
+    public Integer timeout {get; private set;}
 
-    public PollConfiguration withStaticDelay(Integer delay) {
-        staticDelay = delay;
+    public PollConfiguration withPollAction(String className) {
+        this.pollClass = className;
+
+        return this;
+    }
+
+    public PollConfiguration withCompletionChecker(String className) {
+        this.checkCompletionClass = className;
+
+        return this;
+    }
+
+    public PollConfiguration withCallbackAction(String className) {
+        this.callbackClass = className;
+
+        return this;
+    }
+
+
+    public PollConfiguration withStaticDelay(Integer seconds) {
+        this.staticDelay = seconds;
 
         return this;
     }
 
     public PollConfiguration withIncrementalDelay(IncrementalDelay delay) {
-        incremDelay = delay;
+        this.incremDelay = delay;
+
+        return this;
+    }
+
+    public PollConfiguration withTimeout(Integer seconds) {
+        this.timeout = seconds;
 
         return this;
     }
