@@ -42,6 +42,7 @@ private class PollerTest {
             .withPollAction('MockPollAction')
             .withCompletionChecker('MockCompletionChecker')
             .withCallbackAction('MockCallback')
+            .withTimeout(86400)
             .withIncrementalDelay(new PollConfiguration.IncrementalDelay()
                 .withInitialIterations(1, 1)
                 .withMiddleIterations(5, 1)

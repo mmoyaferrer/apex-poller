@@ -1,11 +1,10 @@
-public with sharing class PollConfiguration {
+public with sharing class PollConfiguration {    
     public String pollClass {get; private set;}
     public String checkCompletionClass {get; private set;}
     public String callbackClass {get; private set;}
-
     public Integer staticDelay {get; private set;}
     public IncrementalDelay incremDelay {get; private set;}
-
+    public Datetime startTime{get; private set;};
     public Integer timeout {get; private set;}
 
     public PollConfiguration withPollAction(String className) {
@@ -26,7 +25,6 @@ public with sharing class PollConfiguration {
         return this;
     }
 
-
     public PollConfiguration withStaticDelay(Integer seconds) {
         this.staticDelay = seconds;
 
@@ -35,6 +33,12 @@ public with sharing class PollConfiguration {
 
     public PollConfiguration withIncrementalDelay(IncrementalDelay delay) {
         this.incremDelay = delay;
+
+        return this;
+    }
+
+    public PollConfiguration withStartTime(Datetime timing) {
+        this.startTime = timing;
 
         return this;
     }

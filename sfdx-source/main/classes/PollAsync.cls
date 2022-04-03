@@ -42,17 +42,11 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     }
 
     private void scheduleAgain() {
-        // @TODO: Manage timeout
-        // if (iteration.totalTime > configuration.timeout) {
-        //     throw new PollException('Polling Timeout reached');
-        // }
-
         try {
             String nextFireCron = calculateNextFireCron(iteration, configuration);
-            
+
             iteration++;
             Poller scheduledPoll = new Poller(configuration, iteration);
-
             System.schedule('Polling - ' + nextFireCron, nextFireCron, scheduledPoll);
         } catch (AsyncException ex) {
             if (!Test.isRunningTest()) {
@@ -62,23 +56,36 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     }
 
     private String calculateNextFireCron(Integer iteration, PollConfiguration configuration) {
-        Datetime nextTime = Datetime.now();
+        Datetime now = Datetime.now();
 
+        validateTimeout(configuration, now);
+        
+        Datetime nextTime;
         if (configuration.incremDelay != null) {
             if (iteration <= configuration.incremDelay.initialDelayIterations) {
-            nextTime = nextTime.addSeconds(configuration.incremDelay.initialDelay);
+            nextTime = now.addSeconds(configuration.incremDelay.initialDelay);
             } else if (iteration <= configuration.incremDelay.initialDelayIterations + configuration.incremDelay.middleDelayIterations) {
-                nextTime = nextTime.addSeconds(configuration.incremDelay.middleDelay);
+                nextTime = now.addSeconds(configuration.incremDelay.middleDelay);
             } else {
-                nextTime = nextTime.addSeconds(configuration.incremDelay.finalDelay);
+                nextTime = now.addSeconds(configuration.incremDelay.finalDelay);
             }
         } else if (configuration.staticDelay != null) {
-            nextTime = nextTime.addSeconds(configuration.staticDelay);
+            nextTime = now.addSeconds(configuration.staticDelay);
         } else {
             throw new PollException('Neither static delay or incremental delay are defined for PollConfiguration');
         }
 
         return cronFrom(nextTime);
+    }
+
+    private void validateTimeout(PollConfiguration configuration, Datetime now) {
+        Long nowMs = now.getTime();
+        Long startTimeMs = configuration.startTime.getTime();
+
+        Integer differenceSeconds = (Integer) ((nowMs - startTimeMs) / 1000);
+        if (differenceSeconds >= configuration.timeout) {
+            throw new PollException('Polling timeout reached');
+        }
     }
 
     private String cronFrom(Datetime dateItem) {
