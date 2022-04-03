@@ -49,7 +49,7 @@ This framework makes use of schedulable/queuable apex jobs to:
 **When** the consumer start the polling process, by usage of the `Poller` class
 
 **Then** a queueable apex job will start, and will:
-    - Execute the logic provided in the polling action class
-    - Check if the response contains the expected data (logic provided in 2)):
-        - If yes -> Will call the polling callback and finish the process
-        - If no -> Will re-schedule itself following the specified static/incremental delay. For the mentioned re-scheduling, an intermediate schedulable apex class is used.
+- 1) Execute the logic provided in the polling action class
+- 2) Check if the response contains the expected data, by the logic provided in 2, and:
+    - a) If yes, will call the polling callback and finish the process
+    - b) If no, will re-schedule itself following the specified static/incremental delay. For the mentioned re-scheduling, an intermediate schedulable apex class is used.
