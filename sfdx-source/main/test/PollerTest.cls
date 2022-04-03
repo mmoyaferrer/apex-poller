@@ -9,7 +9,7 @@ private class PollerTest {
         Test.setMock(HttpCalloutMock.class, new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse));
 
         // Exercise
-        new Poller(configuration).start();
+        new Poller(configuration).execute();
 
         // Verify
         System.assertEquals(1, [SELECT Count() FROM AsyncApexJob]);

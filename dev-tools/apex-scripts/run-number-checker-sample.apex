@@ -7,4 +7,4 @@ PollConfiguration configuration = new PollConfiguration()
                 .withMiddleIterations(10, 2)
                 .withFinalIterations(30));
 
-new Poller(configuration).start();
+new Poller(configuration).execute();
