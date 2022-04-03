@@ -90,13 +90,15 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
     private Boolean checkCompleted(Object httpResponseBody) {
         Type callbackClass = typeByName(configuration.checkCompletionClass);
-        return ((PollCompletionCheckerI) callbackClass.newInstance()).execute(httpResponseBody);
+        Object callableResponse = ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{'default' => httpResponseBody});
+
+        return (Boolean) callableResponse;
     }
 
     private void invokeCallback(Object httpResponseBody) {
         if (String.isNotBlank(configuration.callbackClass)) {
             Type callbackClass = typeByName(configuration.callbackClass);
-            ((PollFinishCallbackI) callbackClass.newInstance()).execute(httpResponseBody);
+            ((Callable) callbackClass.newInstance()).call('', new Map<String,Object>{'default' => httpResponseBody});
         }
     }
 

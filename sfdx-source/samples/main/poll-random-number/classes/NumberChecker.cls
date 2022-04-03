@@ -1,7 +1,7 @@
-public with sharing class NumberChecker implements PollCompletionCheckerI {
-    public Boolean execute(Object httpResponse) {
-        List<Object> objects = (List<Object>) httpResponse;
-        Integer numberFound = (Integer) objects[0];
+public with sharing class NumberChecker implements Callable {
+    public Object call(String action, Map<String,Object> args) {
+        List<Object> httpResponseObjects = (List<Object>) args.get('default');
+        Integer numberFound = (Integer) httpResponseObjects[0];
 
         System.debug(numberFound);
 
