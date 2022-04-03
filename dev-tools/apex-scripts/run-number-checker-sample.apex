@@ -8,4 +8,3 @@ PollConfiguration configuration = new PollConfiguration()
                 .withFinalIterations(30));
 
 new Poller(configuration).start();
-
