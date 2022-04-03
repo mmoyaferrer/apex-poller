@@ -3,8 +3,11 @@ public with sharing class NumberChecker implements Callable {
         List<Object> httpResponseObjects = (List<Object>) args.get('default');
         Integer numberFound = (Integer) httpResponseObjects[0];
 
-        System.debug(numberFound);
+        Boolean result = numberFound == 3
 
-        return numberFound == 3;
+        System.debug(numberFound);
+        System.debug('completed?: ' + completed);
+
+        return result;
     }
 }

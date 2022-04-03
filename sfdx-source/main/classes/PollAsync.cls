@@ -14,8 +14,6 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Object pollResponse = invokeClass(configuration.pollClass, null);
         Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
 
-        System.debug('completed?: ' + completed);
-
         if (completed) {
             invokeClass(configuration.callbackClass, pollResponse);
         } else {
@@ -66,9 +64,6 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     private String calculateNextFireCron(Integer iteration, PollConfiguration configuration) {
         Datetime nextTime = Datetime.now();
 
-        System.debug('iteration: ' + iteration);
-        System.debug('current time: ' + nextTime);
-
         if (configuration.incremDelay != null) {
             if (iteration <= configuration.incremDelay.initialDelayIterations) {
             nextTime = nextTime.addSeconds(configuration.incremDelay.initialDelay);
@@ -82,9 +77,6 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         } else {
             throw new PollException('Neither static delay or incremental delay are defined for PollConfiguration');
         }
-
-        System.debug('next time: ' + nextTime);
-
 
         return cronFrom(nextTime);
     }
