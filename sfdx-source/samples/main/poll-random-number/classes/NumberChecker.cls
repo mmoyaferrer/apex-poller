@@ -6,7 +6,7 @@ public with sharing class NumberChecker implements Callable {
         Boolean result = numberFound == 3;
 
         System.debug(numberFound);
-        System.debug('completed?: ' + completed);
+        System.debug('completed?: ' + result);
 
         return result;
     }
