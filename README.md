@@ -4,6 +4,17 @@
 
 This framework provides a simple and guided way to implement a polling mechanism for long running processes in Salesforce. Appliable to any long-running process, such as Http polling but not limited to it.
 
+## Samples
+
+### Random number checker
+
+A sample of using this framework can be seen in `sfdx-source/samples/main/poll-random-number`. To execute it, a script is provided in `dev-tools/apex-scripts/run-number-checker-sample`
+
+In the sample:
+- 1) The polling action requests a random number from www.randomnumberapi.com API
+- 2) Check if that number is 3
+- 3) Send an email with the information once 3) happens
+
 ## Features
 
 - Injection of apex logic by the consumer (through classes names) in order to provide:
