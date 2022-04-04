@@ -1,2 +1,2 @@
-public with sharing class PollException extends Exception{
+public with sharing class PollException extends Exception {
 }

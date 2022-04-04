@@ -1,15 +1,16 @@
 public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
-   
     private PollConfiguration configuration;
     private Integer iteration;
 
-    // PUBLIC
-    
+    // CONSTRUCTOR
+
     public PollAsync(PollConfiguration configuration, Integer iteration) {
         this.configuration = configuration;
         this.iteration = iteration;
     }
-    
+
+    // PUBLIC
+
     public void execute(QueueableContext context) {
         Object pollResponse = invokeClass(configuration.pollClass, null);
         Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
@@ -18,14 +19,14 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
             invokeClass(configuration.callbackClass, pollResponse);
         } else {
             scheduleAgain();
-        }     
+        }
     }
 
     // PRIVATE
 
     private Object invokeClass(String className, Object args) {
         Type callbackClass = typeByName(className);
-        return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{'default' => args});
+        return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{ 'default' => args });
     }
 
     private Type typeByName(String fullClassName) {
@@ -59,15 +60,18 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Datetime now = Datetime.now();
 
         validateTimeout(configuration, now);
-        
+
         Datetime nextTime;
         if (configuration.incremDelay != null) {
-            if (iteration <= configuration.incremDelay.initialDelayIterations) {
-            nextTime = now.addSeconds(configuration.incremDelay.initialDelay);
-            } else if (iteration <= configuration.incremDelay.initialDelayIterations + configuration.incremDelay.middleDelayIterations) {
-                nextTime = now.addSeconds(configuration.incremDelay.middleDelay);
+            PollConfiguration.IncrementalDelay delay = configuration.incremDelay;
+            Integer totalMiddleIterations = delay.initialDelayIterations + delay.middleDelayIterations;
+
+            if (iteration <= delay.initialDelayIterations) {
+                nextTime = now.addSeconds(delay.initialDelay);
+            } else if (iteration <= totalMiddleIterations) {
+                nextTime = now.addSeconds(delay.middleDelay);
             } else {
-                nextTime = now.addSeconds(configuration.incremDelay.finalDelay);
+                nextTime = now.addSeconds(delay.finalDelay);
             }
         } else if (configuration.staticDelay != null) {
             nextTime = now.addSeconds(configuration.staticDelay);
