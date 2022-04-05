@@ -12,6 +12,9 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
     // PUBLIC
 
     public void execute(QueueableContext context) {
+        PollAsyncFinalizer finalizer = new PollAsyncFinalizer(this);
+        System.attachFinalizer(finalizer);
+
         Object pollResponse = invokeClass(configuration.pollClass, null);
         Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
 
@@ -101,5 +104,30 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         String second = String.valueOf(dateItem.second());
 
         return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
+    }
+
+    // INNER
+
+    private with sharing class PollAsyncFinalizer implements Finalizer {
+        private PollAsync outerClass;
+
+        // CONSTRUCTOR
+
+        // Note: this is to overcome a non anologous Java limitation.
+        // See: https://developer.salesforce.com/forums/?id=906F0000000BTo1IAG
+        // See: https://salesforce.stackexchange.com/questions/101056/how-to-call-outerclass-method-in-a-wrapper-class
+        private PollAsyncFinalizer(PollAsync outerClass) {
+            this.outerClass = outerClass;
+        }
+
+        public void execute(System.FinalizerContext context) {
+            Exception ex = context.getException();
+            if (context.getResult() == ParentJobResult.UNHANDLED_EXCEPTION && ex.getTypeName() != 'PollException') {
+                System.debug('An unhandled exception happened: ' + ex.getMessage());
+                System.debug(ex.getStackTraceString());
+                System.debug('Scheduling again (up to 5 times)...');
+                outerClass.scheduleAgain();
+            }
+        }
     }
 }

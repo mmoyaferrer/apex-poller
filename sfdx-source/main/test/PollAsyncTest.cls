@@ -58,12 +58,12 @@ private class PollAsyncTest {
         );
 
         // Exercise
-        Exception ex;
+        PollException ex;
         try {
             Test.startTest();
             System.enqueueJob(new PollAsync(configuration, 1));
             Test.stopTest();
-        } catch (Exception e) {
+        } catch (PollException e) {
             ex = e;
         }
 
@@ -71,9 +71,54 @@ private class PollAsyncTest {
         System.assertEquals('Polling timeout reached', ex.getMessage());
     }
 
+    @isTest
+    private static void executeHitsLimitsAndReschedule() {
+        // Setup
+        PollConfiguration configuration = createPollConfigurationForException();
+
+        String mockCalloutResponse = '{"Status": "Completed"}';
+        Test.setMock(
+            HttpCalloutMock.class,
+            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
+        );
+
+        // Exercise
+        DmlException ex;
+        try {
+            Test.startTest();
+            System.enqueueJob(new PollAsync(configuration, 1));
+            Test.stopTest();
+        } catch (DmlException e) {
+            ex = e;
+        }
+
+        // Verify
+        System.assertEquals('Test My Finalizer', ex.getMessage());
+
+        System.assertEquals(0, [SELECT COUNT() FROM Account]);
+
+        Datetime now = Datetime.now();
+        System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+    }
+
     private static PollConfiguration createPollConfiguration() {
         return new PollConfiguration()
             .withPollAction('MockPollAction')
+            .withCompletionChecker('MockCompletionChecker')
+            .withCallbackAction('MockCallback')
+            .withStartTime(Datetime.now())
+            .withTimeout(86400)
+            .withIncrementalDelay(
+                new PollConfiguration.IncrementalDelay()
+                    .withInitialIterations(1, 1)
+                    .withMiddleIterations(5, 1)
+                    .withFinalIterations(10)
+            );
+    }
+
+    private static PollConfiguration createPollConfigurationForException() {
+        return new PollConfiguration()
+            .withPollAction('MockPollActionLimit')
             .withCompletionChecker('MockCompletionChecker')
             .withCallbackAction('MockCallback')
             .withStartTime(Datetime.now())
