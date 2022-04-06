@@ -6,13 +6,16 @@ private class PollerTest {
         PollConfiguration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
-        Test.setMock(HttpCalloutMock.class, new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse));
+        Test.setMock(
+            HttpCalloutMock.class,
+            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
+        );
 
         // Exercise
         new Poller(configuration).execute();
 
         // Verify
-        System.assertEquals(1, [SELECT Count() FROM AsyncApexJob]);
+        System.assertEquals(1, [SELECT COUNT() FROM AsyncApexJob]);
     }
 
     @isTest
@@ -21,7 +24,10 @@ private class PollerTest {
         PollConfiguration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
-        Test.setMock(HttpCalloutMock.class, new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse));
+        Test.setMock(
+            HttpCalloutMock.class,
+            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
+        );
 
         Poller testScheduledPoll = new Poller(configuration);
 
@@ -34,7 +40,7 @@ private class PollerTest {
         Test.stopTest();
 
         // Verify
-        System.assertEquals(2, [SELECT Count() FROM AsyncApexJob]);
+        System.assertEquals(2, [SELECT COUNT() FROM AsyncApexJob]);
     }
 
     private static PollConfiguration createPollConfiguration() {
@@ -43,9 +49,8 @@ private class PollerTest {
             .withCompletionChecker('MockCompletionChecker')
             .withCallbackAction('MockCallback')
             .withTimeout(86400)
-            .withIncrementalDelay(new PollConfiguration.IncrementalDelay()
-                .withInitialIterations(1, 1)
-                .withMiddleIterations(5, 1)
-                .withFinalIterations(10));
+            .withIncrementalDelay(
+                new PollConfiguration.IncrementalDelay().addDelay(1, 5).addDelay(3, 15).addDelay(5, 35)
+            );
     }
 }

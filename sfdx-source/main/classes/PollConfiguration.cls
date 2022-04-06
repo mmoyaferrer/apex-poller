@@ -3,7 +3,7 @@ public with sharing class PollConfiguration {
     public String checkCompletionClass { get; private set; }
     public String callbackClass { get; private set; }
     public Integer staticDelay { get; private set; }
-    public IncrementalDelay incremDelay { get; private set; }
+    public List<IncrementalDelay> incremDelays { get; private set; }
     public Datetime startTime { get; private set; }
     public Integer timeout { get; private set; }
 
@@ -34,8 +34,10 @@ public with sharing class PollConfiguration {
     }
 
     public PollConfiguration withIncrementalDelay(IncrementalDelay delay) {
-        this.incremDelay = delay;
-
+        if (this.incremDelays == null) {
+            this.incremDelays = new List<IncrementalDelay>();
+        }
+        this.incremDelays.add(delay);
         return this;
     }
 
@@ -53,33 +55,25 @@ public with sharing class PollConfiguration {
 
     // INNER
 
-    public class IncrementalDelay {
-        public Integer initialDelay { get; private set; }
-        public Integer initialDelayIterations { get; private set; }
+    public class IncrementalDelay implements Comparable {
+        public Integer delayInSeconds;
+        public Integer iterationsCount;
 
-        public Integer middleDelay { get; private set; }
-        public Integer middleDelayIterations { get; private set; }
-
-        public Integer finalDelay { get; private set; }
-
-        public IncrementalDelay withInitialIterations(Integer seconds, Integer iterationsCount) {
-            initialDelay = seconds;
-            initialDelayIterations = iterationsCount;
-
+        public IncrementalDelay addDelay(Integer delayInSeconds, Integer iterationsCount) {
+            this.delayInSeconds = delayInSeconds;
+            this.iterationsCount = iterationsCount;
             return this;
         }
 
-        public IncrementalDelay withMiddleIterations(Integer seconds, Integer iterationsCount) {
-            middleDelay = seconds;
-            middleDelayIterations = iterationsCount;
-
-            return this;
-        }
-
-        public IncrementalDelay withFinalIterations(Integer seconds) {
-            finalDelay = seconds;
-
-            return this;
+        public Integer compareTo(Object compareTo) {
+            IncrementalDelay inc = (IncrementalDelay) compareTo;
+            Integer result = 0;
+            if (iterationsCount > inc.iterationsCount) {
+                result = 1;
+            } else if (iterationsCount < inc.iterationsCount) {
+                result = -1;
+            }
+            return result;
         }
     }
 }
