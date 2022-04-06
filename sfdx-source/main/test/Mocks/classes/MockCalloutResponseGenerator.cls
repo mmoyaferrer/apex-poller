@@ -1,7 +1,5 @@
-
 @isTest
 public class MockCalloutResponseGenerator implements HttpCalloutMock {
-    
     private String responseBody;
     private Integer statusCode;
 
@@ -12,7 +10,7 @@ public class MockCalloutResponseGenerator implements HttpCalloutMock {
         return this;
     }
 
-    public HTTPResponse respond(HTTPRequest req) {        
+    public HTTPResponse respond(HTTPRequest req) {
         HttpResponse res = new HttpResponse();
 
         res.setHeader('Content-Type', 'application/json');

@@ -15,6 +15,3 @@ fi
 
 echo "Creating scratch ORG"
 execute sfdx force:org:create -a $SCRATCH_ORG_ALIAS -s -f ./config/project-scratch-def.json -d 30
-
-echo "Make sure Org user is english"
-sfdx force:data:record:update -s User -w "Name='User User'" -v "Languagelocalekey=en_US"

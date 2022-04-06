@@ -1,11 +1,13 @@
-public with sharing class PollConfiguration {    
-    public String pollClass {get; private set;}
-    public String checkCompletionClass {get; private set;}
-    public String callbackClass {get; private set;}
-    public Integer staticDelay {get; private set;}
-    public List<IncrementalDelay> incremDelay {get; private set;}
-    public Datetime startTime{get; private set;}
-    public Integer timeout {get; private set;}
+public with sharing class PollConfiguration {
+    public String pollClass { get; private set; }
+    public String checkCompletionClass { get; private set; }
+    public String callbackClass { get; private set; }
+    public Integer staticDelay { get; private set; }
+    public IncrementalDelay incremDelay { get; private set; }
+    public Datetime startTime { get; private set; }
+    public Integer timeout { get; private set; }
+
+    // PUBLIC
 
     public PollConfiguration withPollAction(String className) {
         this.pollClass = className;
@@ -50,7 +52,7 @@ public with sharing class PollConfiguration {
 
         return this;
     }
-
+  
     public class IncrementalDelay implements Comparable{
         public Integer delayInSeconds;
         public Integer iterationsCount;
@@ -68,6 +70,4 @@ public with sharing class PollConfiguration {
             return -1;   
         }        
     }
-
-
 }
