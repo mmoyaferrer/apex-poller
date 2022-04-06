@@ -70,8 +70,9 @@ private class PollAsyncTest {
             .withStartTime(Datetime.now())
             .withTimeout(86400)
             .withIncrementalDelay(new PollConfiguration.IncrementalDelay()
-                .withInitialIterations(1, 1)
-                .withMiddleIterations(5, 1)
-                .withFinalIterations(10));
+                .addDelay(1, 5)
+                .addDelay(3, 15)
+                .addDelay(5, 25)
+                .addDelay(15, 30));
     }
 }

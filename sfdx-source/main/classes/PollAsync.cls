@@ -59,16 +59,12 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Datetime now = Datetime.now();
 
         validateTimeout(configuration, now);
-        
+        List<PollConfiguration.IncrementalDelay> incrementalDelays = configuration.incremDelay;
+        incrementalDelays.sort();
         Datetime nextTime;
-        if (configuration.incremDelay != null) {
-            if (iteration <= configuration.incremDelay.initialDelayIterations) {
-            nextTime = now.addSeconds(configuration.incremDelay.initialDelay);
-            } else if (iteration <= configuration.incremDelay.initialDelayIterations + configuration.incremDelay.middleDelayIterations) {
-                nextTime = now.addSeconds(configuration.incremDelay.middleDelay);
-            } else {
-                nextTime = now.addSeconds(configuration.incremDelay.finalDelay);
-            }
+        if (incrementalDelays != null && incrementalDelays.size() > 0) {
+            PollConfiguration.IncrementalDelay currentDelay = closestDelay(iteration,incrementalDelays);
+            nextTime = now.addSeconds(currentDelay.delayInSeconds);
         } else if (configuration.staticDelay != null) {
             nextTime = now.addSeconds(configuration.staticDelay);
         } else {
@@ -97,5 +93,24 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         String second = String.valueOf(dateItem.second());
 
         return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
+    }
+
+    private PollConfiguration.IncrementalDelay closestDelay(Integer iteration, List<PollConfiguration.IncrementalDelay> incrementalDelays) {
+        PollConfiguration.IncrementalDelay[] cleanDelays = new List<PollConfiguration.IncrementalDelay>();
+        for(PollConfiguration.IncrementalDelay delay : incrementalDelays) {
+            if(delay.iterationsCount > iteration){
+                cleanDelays.add(delay);
+            }
+        }
+        PollConfiguration.IncrementalDelay currentDelay = cleanDelays[0];
+        Integer diff = Math.abs(iteration - currentDelay.iterationsCount);
+        for (Integer val = 0; val < cleanDelays.size(); val++) {
+            Integer newdiff = Math.abs (iteration - cleanDelays[val].iterationsCount);
+            if (newdiff < diff) {
+                diff = newdiff;
+                currentDelay = cleanDelays[val];
+            }
+        }
+        return currentDelay;
     }
 }
