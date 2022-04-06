@@ -1,16 +1,20 @@
 public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
-   
     private PollConfiguration configuration;
     private Integer iteration;
 
-    // PUBLIC
-    
+    // CONSTRUCTOR
+
     public PollAsync(PollConfiguration configuration, Integer iteration) {
         this.configuration = configuration;
         this.iteration = iteration;
     }
-    
+
+    // PUBLIC
+
     public void execute(QueueableContext context) {
+        PollAsyncFinalizer finalizer = new PollAsyncFinalizer(this);
+        System.attachFinalizer(finalizer);
+
         Object pollResponse = invokeClass(configuration.pollClass, null);
         Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
 
@@ -18,14 +22,14 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
             invokeClass(configuration.callbackClass, pollResponse);
         } else {
             scheduleAgain();
-        }     
+        }
     }
 
     // PRIVATE
 
     private Object invokeClass(String className, Object args) {
         Type callbackClass = typeByName(className);
-        return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{'default' => args});
+        return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{ 'default' => args });
     }
 
     private Type typeByName(String fullClassName) {
@@ -59,15 +63,18 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Datetime now = Datetime.now();
 
         validateTimeout(configuration, now);
-        
+
         Datetime nextTime;
         if (configuration.incremDelay != null) {
-            if (iteration <= configuration.incremDelay.initialDelayIterations) {
-            nextTime = now.addSeconds(configuration.incremDelay.initialDelay);
-            } else if (iteration <= configuration.incremDelay.initialDelayIterations + configuration.incremDelay.middleDelayIterations) {
-                nextTime = now.addSeconds(configuration.incremDelay.middleDelay);
+            PollConfiguration.IncrementalDelay delay = configuration.incremDelay;
+            Integer totalMiddleIterations = delay.initialDelayIterations + delay.middleDelayIterations;
+
+            if (iteration <= delay.initialDelayIterations) {
+                nextTime = now.addSeconds(delay.initialDelay);
+            } else if (iteration <= totalMiddleIterations) {
+                nextTime = now.addSeconds(delay.middleDelay);
             } else {
-                nextTime = now.addSeconds(configuration.incremDelay.finalDelay);
+                nextTime = now.addSeconds(delay.finalDelay);
             }
         } else if (configuration.staticDelay != null) {
             nextTime = now.addSeconds(configuration.staticDelay);
@@ -97,5 +104,30 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         String second = String.valueOf(dateItem.second());
 
         return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
+    }
+
+    // INNER
+
+    private with sharing class PollAsyncFinalizer implements Finalizer {
+        private PollAsync outerClass;
+
+        // CONSTRUCTOR
+
+        // Note: this is to overcome a non anologous Java limitation.
+        // See: https://developer.salesforce.com/forums/?id=906F0000000BTo1IAG
+        // See: https://salesforce.stackexchange.com/questions/101056/how-to-call-outerclass-method-in-a-wrapper-class
+        private PollAsyncFinalizer(PollAsync outerClass) {
+            this.outerClass = outerClass;
+        }
+
+        public void execute(System.FinalizerContext context) {
+            Exception ex = context.getException();
+            if (context.getResult() == ParentJobResult.UNHANDLED_EXCEPTION && ex.getTypeName() != 'PollException') {
+                System.debug('An unhandled exception happened: ' + ex.getMessage());
+                System.debug(ex.getStackTraceString());
+                System.debug('Scheduling again (up to 5 times)...');
+                outerClass.scheduleAgain();
+            }
+        }
     }
 }
