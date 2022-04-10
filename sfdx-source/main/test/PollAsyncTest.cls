@@ -98,12 +98,12 @@ private class PollAsyncTest {
         );
 
         // Exercise
-        PollException ex;
+        Poller.PollingException ex;
         try {
             Test.startTest();
             System.enqueueJob(new PollAsync(configuration, 1));
             Test.stopTest();
-        } catch (PollException e) {
+        } catch (Poller.PollingException e) {
             ex = e;
         }
 

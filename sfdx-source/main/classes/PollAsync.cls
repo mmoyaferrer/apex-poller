@@ -39,7 +39,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         Type result = Type.forName(namespace, className);
 
         if (result == null) {
-            throw new PollException('Invalid class ' + fullClassName);
+            throw new Poller.PollingException('Invalid class ' + fullClassName);
         }
 
         return result;
@@ -71,7 +71,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
             Poller.IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
             nextTime = now.addSeconds(nextDelay.delayInSeconds);
         } else {
-            throw new PollException('Delay/s not defined');
+            throw new Poller.PollingException('Delay/s not defined');
         }
 
         return cronFrom(nextTime);
@@ -83,7 +83,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
         Integer differenceSeconds = (Integer) ((nowMs - startTimeMs) / 1000);
         if (differenceSeconds >= configuration.timeout) {
-            throw new PollException('Polling timeout reached');
+            throw new Poller.PollingException('Polling timeout reached');
         }
     }
 
@@ -124,7 +124,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
         public void execute(System.FinalizerContext context) {
             Exception ex = context.getException();
-            if (context.getResult() == ParentJobResult.UNHANDLED_EXCEPTION && ex.getTypeName() != 'PollException') {
+            if (context.getResult() == ParentJobResult.UNHANDLED_EXCEPTION && ex.getTypeName() != 'PollingException') {
                 System.debug('An unhandled exception happened: ' + ex.getMessage());
                 System.debug(ex.getStackTraceString());
                 System.debug('Scheduling again (up to 5 times)...');

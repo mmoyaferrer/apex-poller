@@ -97,4 +97,6 @@ public with sharing class Poller implements Schedulable {
             return result;
         }
     }
+
+    public class PollingException extends Exception {}
 }
