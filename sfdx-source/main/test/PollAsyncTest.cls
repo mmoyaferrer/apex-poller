@@ -24,7 +24,7 @@ private class PollAsyncTest {
     }
 
     @isTest
-    private static void executeAndReschedule() {
+    private static void rescheduleFirstIteration() {
         // Setup
         PollConfiguration configuration = createPollConfiguration();
 
@@ -40,10 +40,50 @@ private class PollAsyncTest {
         Test.stopTest();
 
         // Verify
-        System.assertEquals(0, [SELECT COUNT() FROM Account]);
-
         Datetime now = Datetime.now();
-        System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+        System.assertEquals(now.addSeconds(5), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+    }
+
+    @isTest
+    private static void rescheduleThirdIteration() {
+        // Setup
+        PollConfiguration configuration = createPollConfiguration();
+
+        String mockCalloutResponse = '{"Status": "In Progress"}';
+        Test.setMock(
+            HttpCalloutMock.class,
+            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
+        );
+
+        // Exercise
+        Test.startTest();
+        System.enqueueJob(new PollAsync(configuration, 3));
+        Test.stopTest();
+
+        // Verify
+        Datetime now = Datetime.now();
+        System.assertEquals(now.addSeconds(15), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+    }
+
+    @isTest
+    private static void rescheduleUnexpectedIterationBeforeTimeout() {
+        // Setup
+        PollConfiguration configuration = createPollConfiguration();
+
+        String mockCalloutResponse = '{"Status": "In Progress"}';
+        Test.setMock(
+            HttpCalloutMock.class,
+            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
+        );
+
+        // Exercise
+        Test.startTest();
+        System.enqueueJob(new PollAsync(configuration, 100));
+        Test.stopTest();
+
+        // Verify
+        Datetime now = Datetime.now();
+        System.assertEquals(now.addSeconds(30), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
     }
 
     @isTest
