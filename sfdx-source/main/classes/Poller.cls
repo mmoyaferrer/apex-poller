@@ -163,10 +163,7 @@ public with sharing class Poller implements Schedulable {
         private String calculateNextFireCron(Integer iteration, Configuration configuration) {
             Datetime now = Datetime.now();
             validateTimeout(configuration, now);
-    
-            System.debug('iteration: ' + iteration);
-            System.debug('now: ' + now);
-    
+
             List<IncrementalDelay> incrementalDelays = configuration.incremDelays;
             incrementalDelays.sort();
     
@@ -177,9 +174,7 @@ public with sharing class Poller implements Schedulable {
             } else {
                 throw new PollingException('Delay/s not defined');
             }
-    
-            System.debug('next: ' + nextTime);
-    
+
             return cronFrom(nextTime);
         }
     
