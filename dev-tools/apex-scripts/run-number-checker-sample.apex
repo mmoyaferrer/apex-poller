@@ -3,9 +3,8 @@ new Poller(
         .pollWith('RequestNumber')
         .untilTrue('NumberChecker')
         .then('CorrectNumberCallback')
+        .addDelay(5, 10)
+        .addDelay(10, 20)
+        .addDelay(30, 180)
         .timeout(86400)
-        .addDelay(1, 5)
-        .addDelay(2, 10)
-        .addDelay(3, 30)
 ).execute();
-
