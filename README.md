@@ -2,11 +2,10 @@
 
 This framework provides a simple and guided way to implement a polling mechanism for long running processes in Salesforce. Applicable to any long-running process, such as Http polling but not limited to it.
 
-Makes use of schedulable/queuable apex jobs to:
-
--   Execute provided polling logic
--   Check if the poll has completed
--   Re-schedule itself if not completed or failed, by following a delay pattern.
+By injecting 3 apex classes, will run a polling mechanism based on 3 steps:
+-   1) Execute the polling logic
+-   2) Evaluate the response (automatically rescheduling itself into a new poll if it's not the expected one)
+-   3) Execute callback logic when finished
 
 ## Samples
 ### Random number checker
