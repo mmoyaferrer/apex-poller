@@ -3,7 +3,7 @@ private class PollerTest {
     @isTest
     private static void start() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
         Test.setMock(
@@ -21,7 +21,7 @@ private class PollerTest {
     @isTest
     private static void schedule() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
         Test.setMock(
@@ -43,8 +43,8 @@ private class PollerTest {
         System.assertEquals(2, [SELECT COUNT() FROM AsyncApexJob]);
     }
 
-    private static PollConfiguration createPollConfiguration() {
-        return new PollConfiguration()
+    private static Poller.Configuration createPollConfiguration() {
+        return new Poller.Configuration()
             .pollWith('MockPollAction')
             .untilTrue('MockCompletionChecker')
             .then('MockCallback')

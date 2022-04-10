@@ -1,10 +1,10 @@
 public with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
-    private PollConfiguration configuration;
+    private Poller.Configuration configuration;
     private Integer iteration;
 
     // CONSTRUCTOR
 
-    public PollAsync(PollConfiguration configuration, Integer iteration) {
+    public PollAsync(Poller.Configuration configuration, Integer iteration) {
         this.configuration = configuration;
         this.iteration = iteration;
     }
@@ -59,16 +59,16 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         }
     }
 
-    private String calculateNextFireCron(Integer iteration, PollConfiguration configuration) {
+    private String calculateNextFireCron(Integer iteration, Poller.Configuration configuration) {
         Datetime now = Datetime.now();
         validateTimeout(configuration, now);
 
-        List<PollConfiguration.IncrementalDelay> incrementalDelays = configuration.incremDelays;
+        List<Poller.IncrementalDelay> incrementalDelays = configuration.incremDelays;
         incrementalDelays.sort();
 
         Datetime nextTime;
         if (incrementalDelays != null && incrementalDelays.size() > 0) {
-            PollConfiguration.IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
+            Poller.IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
             nextTime = now.addSeconds(nextDelay.delayInSeconds);
         } else {
             throw new PollException('Delay/s not defined');
@@ -77,7 +77,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         return cronFrom(nextTime);
     }
 
-    private void validateTimeout(PollConfiguration configuration, Datetime now) {
+    private void validateTimeout(Poller.Configuration configuration, Datetime now) {
         Long nowMs = now.getTime();
         Long startTimeMs = configuration.startTime.getTime();
 
@@ -87,14 +87,14 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         }
     }
 
-    private PollConfiguration.IncrementalDelay nextDelay(
+    private Poller.IncrementalDelay nextDelay(
         Integer iteration,
-        List<PollConfiguration.IncrementalDelay> incrementalDelays
+        List<Poller.IncrementalDelay> incrementalDelays
     ) {
 
-        PollConfiguration.IncrementalDelay result;
+        Poller.IncrementalDelay result;
  
-        for (PollConfiguration.IncrementalDelay delay : incrementalDelays) {
+        for (Poller.IncrementalDelay delay : incrementalDelays) {
             if (delay.upperIteration >= iteration) {
                 result = delay;
                 break;

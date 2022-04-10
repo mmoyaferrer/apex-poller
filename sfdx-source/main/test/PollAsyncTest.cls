@@ -3,7 +3,7 @@ private class PollAsyncTest {
     @isTest
     private static void execute() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
         Test.setMock(
@@ -26,7 +26,7 @@ private class PollAsyncTest {
     @isTest
     private static void rescheduleFirstIteration() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "In Progress"}';
         Test.setMock(
@@ -47,7 +47,7 @@ private class PollAsyncTest {
     @isTest
     private static void rescheduleThirdIteration() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "In Progress"}';
         Test.setMock(
@@ -68,7 +68,7 @@ private class PollAsyncTest {
     @isTest
     private static void rescheduleUnexpectedIterationBeforeTimeout() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration();
+        Poller.Configuration configuration = createPollConfiguration();
 
         String mockCalloutResponse = '{"Status": "In Progress"}';
         Test.setMock(
@@ -89,7 +89,7 @@ private class PollAsyncTest {
     @isTest
     private static void rescheduleReachesTimeout() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration().timeout(0);
+        Poller.Configuration configuration = createPollConfiguration().timeout(0);
 
         String mockCalloutResponse = '{"Status": "In Progress"}';
         Test.setMock(
@@ -114,7 +114,7 @@ private class PollAsyncTest {
     @isTest
     private static void executeHitsLimitsAndReschedule() {
         // Setup
-        PollConfiguration configuration = createPollConfigurationForException();
+        Poller.Configuration configuration = createPollConfigurationForException();
 
         String mockCalloutResponse = '{"Status": "Completed"}';
         Test.setMock(
@@ -141,8 +141,8 @@ private class PollAsyncTest {
         System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
     }
 
-    private static PollConfiguration createPollConfiguration() {
-        return new PollConfiguration()
+    private static Poller.Configuration createPollConfiguration() {
+        return new Poller.Configuration()
             .pollWith('MockPollAction')
             .untilTrue('MockCompletionChecker')
             .then('MockCallback')
@@ -154,8 +154,8 @@ private class PollAsyncTest {
             .addDelay(15, 30);
     }
 
-    private static PollConfiguration createPollConfigurationForException() {
-        return new PollConfiguration()
+    private static Poller.Configuration createPollConfigurationForException() {
+        return new Poller.Configuration()
             .pollWith('MockPollActionLimit')
             .untilTrue('MockCompletionChecker')
             .then('MockCallback')

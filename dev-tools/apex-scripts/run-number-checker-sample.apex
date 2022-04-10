@@ -1,4 +1,4 @@
-PollConfiguration configuration = new PollConfiguration()
+Poller.Configuration configuration = new Poller.Configuration()
     .pollWith('RequestNumber')
     .untilTrue('NumberChecker')
     .then('CorrectNumberCallback')
