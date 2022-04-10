@@ -3,9 +3,9 @@ PollConfiguration configuration = new PollConfiguration()
     .withCompletionChecker('NumberChecker')
     .withCallbackAction('CorrectNumberCallback')
     .withTimeout(86400)
-    .withIncrementalDelay(new PollConfiguration.IncrementalDelay()
-        .withInitialIterations(10, 1)
-        .withMiddleIterations(30, 2)
-        .withFinalIterations(60));
+    .addDelay(1, 5)
+    .addDelay(2, 10)
+    .addDelay(3, 30);
 
 new Poller(configuration).execute();
+

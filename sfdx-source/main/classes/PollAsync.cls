@@ -61,18 +61,17 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
 
     private String calculateNextFireCron(Integer iteration, PollConfiguration configuration) {
         Datetime now = Datetime.now();
-
         validateTimeout(configuration, now);
-        List<PollConfiguration.IncrementalDelay> incrementalDelays = configuration.incremDelay;
+
+        List<PollConfiguration.IncrementalDelay> incrementalDelays = configuration.incremDelays;
         incrementalDelays.sort();
+
         Datetime nextTime;
         if (incrementalDelays != null && incrementalDelays.size() > 0) {
-            PollConfiguration.IncrementalDelay currentDelay = closestDelay(iteration, incrementalDelays);
-            nextTime = now.addSeconds(currentDelay.delayInSeconds);
-        } else if (configuration.staticDelay != null) {
-            nextTime = now.addSeconds(configuration.staticDelay);
+            PollConfiguration.IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
+            nextTime = now.addSeconds(nextDelay.delayInSeconds);
         } else {
-            throw new PollException('Neither static delay or incremental delay are defined for PollConfiguration');
+            throw new PollException('Delay/s not defined');
         }
 
         return cronFrom(nextTime);
@@ -88,37 +87,25 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         }
     }
 
-    private PollConfiguration.IncrementalDelay closestDelay(
+    private PollConfiguration.IncrementalDelay nextDelay(
         Integer iteration,
         List<PollConfiguration.IncrementalDelay> incrementalDelays
     ) {
-        PollConfiguration.IncrementalDelay[] cleanDelays = new List<PollConfiguration.IncrementalDelay>();
+
+        PollConfiguration.IncrementalDelay result;
+ 
         for (PollConfiguration.IncrementalDelay delay : incrementalDelays) {
-            if (delay.iterationsCount > iteration) {
-                cleanDelays.add(delay);
+            if (delay.iterationsCount >= iteration) {
+                result = delay;
+                break;
             }
         }
-        PollConfiguration.IncrementalDelay currentDelay = cleanDelays[0];
-        Integer diff = Math.abs(iteration - currentDelay.iterationsCount);
-        for (Integer val = 0; val < cleanDelays.size(); val++) {
-            Integer newdiff = Math.abs(iteration - cleanDelays[val].iterationsCount);
-            if (newdiff < diff) {
-                diff = newdiff;
-                currentDelay = cleanDelays[val];
-            }
-        }
-        return currentDelay;
+
+        return result != null ? result : incrementalDelays[incrementalDelays.size() - 1];
     }
 
     private String cronFrom(Datetime dateItem) {
-        String year = String.valueOf(dateItem.year());
-        String month = String.valueOf(dateItem.month());
-        String day = String.valueOf(dateItem.day());
-        String hour = String.valueOf(dateItem.hour());
-        String min = String.valueOf(dateItem.minute());
-        String second = String.valueOf(dateItem.second());
-
-        return second + ' ' + min + ' ' + hour + ' ' + day + ' ' + month + ' ' + '?' + ' ' + year;
+        return dateItem.second() + ' ' + dateItem.minute() + ' ' + dateItem.hour() + ' ' + dateItem.day() + ' ' + dateItem.month() + ' ' + '?' + ' ' + dateItem.year();
     }
 
     // INNER

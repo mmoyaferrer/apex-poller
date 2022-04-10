@@ -108,9 +108,10 @@ private class PollAsyncTest {
             .withCallbackAction('MockCallback')
             .withStartTime(Datetime.now())
             .withTimeout(86400)
-            .withIncrementalDelay(
-                new PollConfiguration.IncrementalDelay().addDelay(1, 5).addDelay(3, 15).addDelay(5, 25).addDelay(15, 30)
-            );
+            .addDelay(1, 5)
+            .addDelay(3, 15)
+            .addDelay(5, 25)
+            .addDelay(15, 30);
     }
 
     private static PollConfiguration createPollConfigurationForException() {
@@ -120,8 +121,9 @@ private class PollAsyncTest {
             .withCallbackAction('MockCallback')
             .withStartTime(Datetime.now())
             .withTimeout(86400)
-            .withIncrementalDelay(
-                new PollConfiguration.IncrementalDelay().addDelay(1, 5).addDelay(3, 15).addDelay(5, 25).addDelay(15, 30)
-            );
+            .addDelay(1, 5)
+            .addDelay(3, 15)
+            .addDelay(5, 25)
+            .addDelay(15, 30);
     }
 }

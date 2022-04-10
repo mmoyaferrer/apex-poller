@@ -2,7 +2,6 @@ public with sharing class PollConfiguration {
     public String pollClass { get; private set; }
     public String checkCompletionClass { get; private set; }
     public String callbackClass { get; private set; }
-    public Integer staticDelay { get; private set; }
     public List<IncrementalDelay> incremDelays { get; private set; }
     public Datetime startTime { get; private set; }
     public Integer timeout { get; private set; }
@@ -27,17 +26,11 @@ public with sharing class PollConfiguration {
         return this;
     }
 
-    public PollConfiguration withStaticDelay(Integer seconds) {
-        this.staticDelay = seconds;
-
-        return this;
-    }
-
-    public PollConfiguration withIncrementalDelay(IncrementalDelay delay) {
+    public PollConfiguration addDelay(Integer iterationsCount, Integer delayInSeconds) {
         if (this.incremDelays == null) {
             this.incremDelays = new List<IncrementalDelay>();
         }
-        this.incremDelays.add(delay);
+        this.incremDelays.add(new IncrementalDelay(iterationsCount, delayInSeconds));
         return this;
     }
 
@@ -59,10 +52,9 @@ public with sharing class PollConfiguration {
         public Integer delayInSeconds;
         public Integer iterationsCount;
 
-        public IncrementalDelay addDelay(Integer delayInSeconds, Integer iterationsCount) {
+        public IncrementalDelay(Integer iterationsCount, Integer delayInSeconds) {
             this.delayInSeconds = delayInSeconds;
             this.iterationsCount = iterationsCount;
-            return this;
         }
 
         public Integer compareTo(Object compareTo) {
