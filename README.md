@@ -76,3 +76,4 @@ public with sharing class CorrectNumberCallback implements Callable {
     - `.addDelay(5, 10)` Until 5th iteration, the delay will be 10 seconds
     - `.addDelay(10, 20)` Until 10th iteration, the delay will be 20 seconds (does not overwrite the first 5 iterations delay)
     - `.addDelay(30, 180)` Until 30th iteration, the delay will be 180 seconds (does not overwrite the first 10 iterations delay). As this is the final delay, will be taken into account even if the iteration is > 30, until `timeout` is reached.
+*Note that delays will be sorted automatically in ascending order, by nº of iterations, i.e 5-10-30
