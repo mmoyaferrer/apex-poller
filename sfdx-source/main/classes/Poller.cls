@@ -17,7 +17,7 @@ public with sharing class Poller implements Schedulable {
     // PUBLIC
 
     public void execute() {
-        configuration.withStartTime(Datetime.now());
+        configuration.beginning(Datetime.now());
 
         execute(null);
     }

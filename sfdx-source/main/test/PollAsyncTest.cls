@@ -89,7 +89,7 @@ private class PollAsyncTest {
     @isTest
     private static void rescheduleReachesTimeout() {
         // Setup
-        PollConfiguration configuration = createPollConfiguration().withTimeout(0);
+        PollConfiguration configuration = createPollConfiguration().timeout(0);
 
         String mockCalloutResponse = '{"Status": "In Progress"}';
         Test.setMock(
@@ -143,11 +143,11 @@ private class PollAsyncTest {
 
     private static PollConfiguration createPollConfiguration() {
         return new PollConfiguration()
-            .withPollAction('MockPollAction')
-            .withCompletionChecker('MockCompletionChecker')
-            .withCallbackAction('MockCallback')
-            .withStartTime(Datetime.now())
-            .withTimeout(86400)
+            .pollWith('MockPollAction')
+            .untilTrue('MockCompletionChecker')
+            .then('MockCallback')
+            .beginning(Datetime.now())
+            .timeout(86400)
             .addDelay(1, 5)
             .addDelay(3, 15)
             .addDelay(5, 25)
@@ -156,11 +156,11 @@ private class PollAsyncTest {
 
     private static PollConfiguration createPollConfigurationForException() {
         return new PollConfiguration()
-            .withPollAction('MockPollActionLimit')
-            .withCompletionChecker('MockCompletionChecker')
-            .withCallbackAction('MockCallback')
-            .withStartTime(Datetime.now())
-            .withTimeout(86400)
+            .pollWith('MockPollActionLimit')
+            .untilTrue('MockCompletionChecker')
+            .then('MockCallback')
+            .beginning(Datetime.now())
+            .timeout(86400)
             .addDelay(1, 5)
             .addDelay(3, 15)
             .addDelay(5, 25)

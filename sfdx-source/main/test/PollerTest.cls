@@ -45,10 +45,10 @@ private class PollerTest {
 
     private static PollConfiguration createPollConfiguration() {
         return new PollConfiguration()
-            .withPollAction('MockPollAction')
-            .withCompletionChecker('MockCompletionChecker')
-            .withCallbackAction('MockCallback')
-            .withTimeout(86400)
+            .pollWith('MockPollAction')
+            .untilTrue('MockCompletionChecker')
+            .then('MockCallback')
+            .timeout(86400)
             .addDelay(1, 5)
             .addDelay(3, 15)
             .addDelay(5, 35);

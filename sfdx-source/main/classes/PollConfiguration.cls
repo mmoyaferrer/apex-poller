@@ -8,20 +8,32 @@ public with sharing class PollConfiguration {
 
     // PUBLIC
 
-    public PollConfiguration withPollAction(String className) {
+    public PollConfiguration pollWith(String className) {
         this.pollClass = className;
 
         return this;
     }
 
-    public PollConfiguration withCompletionChecker(String className) {
+    public PollConfiguration untilTrue(String className) {
         this.checkCompletionClass = className;
 
         return this;
     }
 
-    public PollConfiguration withCallbackAction(String className) {
+    public PollConfiguration then(String className) {
         this.callbackClass = className;
+
+        return this;
+    }
+
+    public PollConfiguration beginning(Datetime timing) {
+        this.startTime = timing;
+
+        return this;
+    }
+
+    public PollConfiguration timeout(Integer seconds) {
+        this.timeout = seconds;
 
         return this;
     }
@@ -31,18 +43,6 @@ public with sharing class PollConfiguration {
             this.incremDelays = new List<IncrementalDelay>();
         }
         this.incremDelays.add(new IncrementalDelay(upperIteration, delayInSeconds));
-        return this;
-    }
-
-    public PollConfiguration withStartTime(Datetime timing) {
-        this.startTime = timing;
-
-        return this;
-    }
-
-    public PollConfiguration withTimeout(Integer seconds) {
-        this.timeout = seconds;
-
         return this;
     }
 
