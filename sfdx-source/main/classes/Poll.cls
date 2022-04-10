@@ -1,15 +1,15 @@
-public with sharing class Poller implements Schedulable {
+public with sharing class Poll implements Schedulable {
     private Configuration configuration;
     private Integer iteration;
 
     // CONSTRUCTORS
 
-    public Poller(Configuration configuration) {
+    public Poll(Configuration configuration) {
         this.configuration = configuration;
         this.iteration = 1;
     }
 
-    public Poller(Configuration configuration, Integer iteration) {
+    public Poll(Configuration configuration, Integer iteration) {
         this.configuration = configuration;
         this.iteration = iteration;
     }
@@ -151,7 +151,7 @@ public with sharing class Poller implements Schedulable {
                 String nextFireCron = calculateNextFireCron(iteration, configuration);
     
                 iteration++;
-                Poller scheduledPoll = new Poller(configuration, iteration);
+                Poll scheduledPoll = new Poll(configuration, iteration);
                 System.schedule('Polling - ' + nextFireCron, nextFireCron, scheduledPoll);
             } catch (AsyncException ex) {
                 if (!Test.isRunningTest()) {

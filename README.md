@@ -14,8 +14,8 @@ Let's say we want to poll a random number API until we get the number 3.
 
 For that, we can invoke a polling like below (script also in `dev-tools/apex-scripts/run-number-checker-sample`):
 ```
-new Poller(
-    new Poller.Configuration()
+new Poll(
+    new Poll.Configuration()
         .pollWith('RequestNumber')
         .untilTrue('NumberChecker')
         .then('CorrectNumberCallback')

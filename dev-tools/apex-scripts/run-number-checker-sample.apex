@@ -1,5 +1,5 @@
-new Poller(
-    new Poller.Configuration()
+new Poll(
+    new Poll.Configuration()
         .pollWith('RequestNumber')
         .untilTrue('NumberChecker')
         .then('CorrectNumberCallback')
