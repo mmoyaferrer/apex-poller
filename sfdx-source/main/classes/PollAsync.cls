@@ -95,7 +95,7 @@ public with sharing class PollAsync implements Queueable, Database.AllowsCallout
         PollConfiguration.IncrementalDelay result;
  
         for (PollConfiguration.IncrementalDelay delay : incrementalDelays) {
-            if (delay.iterationsCount >= iteration) {
+            if (delay.upperIteration >= iteration) {
                 result = delay;
                 break;
             }

@@ -26,11 +26,11 @@ public with sharing class PollConfiguration {
         return this;
     }
 
-    public PollConfiguration addDelay(Integer iterationsCount, Integer delayInSeconds) {
+    public PollConfiguration addDelay(Integer upperIteration, Integer delayInSeconds) {
         if (this.incremDelays == null) {
             this.incremDelays = new List<IncrementalDelay>();
         }
-        this.incremDelays.add(new IncrementalDelay(iterationsCount, delayInSeconds));
+        this.incremDelays.add(new IncrementalDelay(upperIteration, delayInSeconds));
         return this;
     }
 
@@ -50,19 +50,19 @@ public with sharing class PollConfiguration {
 
     public class IncrementalDelay implements Comparable {
         public Integer delayInSeconds;
-        public Integer iterationsCount;
+        public Integer upperIteration;
 
-        public IncrementalDelay(Integer iterationsCount, Integer delayInSeconds) {
+        public IncrementalDelay(Integer upperIteration, Integer delayInSeconds) {
             this.delayInSeconds = delayInSeconds;
-            this.iterationsCount = iterationsCount;
+            this.upperIteration = upperIteration;
         }
 
         public Integer compareTo(Object compareTo) {
             IncrementalDelay inc = (IncrementalDelay) compareTo;
             Integer result = 0;
-            if (iterationsCount > inc.iterationsCount) {
+            if (upperIteration > inc.upperIteration) {
                 result = 1;
-            } else if (iterationsCount < inc.iterationsCount) {
+            } else if (upperIteration < inc.upperIteration) {
                 result = -1;
             }
             return result;
