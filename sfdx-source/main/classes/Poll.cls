@@ -28,7 +28,7 @@ public with sharing class Poll implements Schedulable {
 
     // INNER
 
-    public class Configuration {
+    public with sharing class Configuration {
         public String pollClass { get; private set; }
         public String checkCompletionClass { get; private set; }
         public String callbackClass { get; private set; }
@@ -77,7 +77,7 @@ public with sharing class Poll implements Schedulable {
         }
     }
 
-    public class IncrementalDelay implements Comparable {
+    private with sharing class IncrementalDelay implements Comparable {
         public Integer delayInSeconds;
         public Integer upperIteration;
 
@@ -88,17 +88,12 @@ public with sharing class Poll implements Schedulable {
 
         public Integer compareTo(Object compareTo) {
             IncrementalDelay inc = (IncrementalDelay) compareTo;
-            Integer result = 0;
-            if (upperIteration > inc.upperIteration) {
-                result = 1;
-            } else if (upperIteration < inc.upperIteration) {
-                result = -1;
-            }
-            return result;
+            return upperIteration > inc.upperIteration ? -1 : (upperIteration < inc.upperIteration) ? -1 : 0;
         }
     }
 
-    public class PollAsync implements Queueable, Database.AllowsCallouts {
+    @TestVisible
+    private with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
         private Configuration configuration;
         private Integer iteration;
     
@@ -234,5 +229,6 @@ public with sharing class Poll implements Schedulable {
         }
     }
 
-    public class PollingException extends Exception {}
+    @TestVisible
+    private with sharing class PollingException extends Exception {}
 }
