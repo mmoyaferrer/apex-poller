@@ -8,7 +8,7 @@
       "path": "sfdx-source/samples"
     }
   ],
-  "name": "PleasePoll",
+  "name": "Apex Poller",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "54.0"

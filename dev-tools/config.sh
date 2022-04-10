@@ -1,4 +1,4 @@
 #!/bin/bash
-DEV_HUB_ALIAS="mmoyaferrer@gmail.com"
-PACKAGENAME="PleasePoll"
-SCRATCH_ORG_ALIAS="PleasePoll_DEV" 
+DEV_HUB_ALIAS="<alias>"
+PACKAGENAME="ApexPoller"
+SCRATCH_ORG_ALIAS="ApexPoller_DEV" 
