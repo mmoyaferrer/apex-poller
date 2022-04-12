@@ -14,15 +14,11 @@ Let's say we want to poll a random number API until we get the number 3.
 
 For that, we can invoke a polling like below (script also in `dev-tools/apex-scripts/run-number-checker-sample`):
 ```
-new Poll(
-    new Poll.Configuration()
-        .pollWith('RequestNumber')
-        .untilTrue('NumberChecker')
-        .then('CorrectNumberCallback')
-        .addDelay(5, 10)
-        .addDelay(10, 20)
-        .addDelay(30, 180)
-        .timeout(86400)
+new Poll(new RequestNumber())
+    .untilTrue(new NumberChecker())
+    .then(new CorrectNumberCallback())
+    .incrementalDelaysPreset()
+    .execute();
 ).execute();
 ```
 Where:
@@ -72,8 +68,15 @@ public with sharing class CorrectNumberCallback implements Callable {
     }
 }
 ```
-- By `addDelay`, we specify the delay in seconds until a specific iteration, i.e:
-    - `.addDelay(5, 10)` Until 5th iteration, the delay will be 10 seconds
-    - `.addDelay(10, 20)` Until 10th iteration, the delay will be 20 seconds (does not overwrite the first 5 iterations delay)
-    - `.addDelay(30, 180)` Until 30th iteration, the delay will be 180 seconds (does not overwrite the first 10 iterations delay). As this is the final delay, will be taken into account even if the iteration is > 30, until `timeout` is reached.
-    - Note: Delays will be sorted automatically in ascending order, by nº of iterations, i.e 5-10-30
+- By `incrementalDelaysPreset` we use built-in delay system, where:
+    - For the first 10 iterations, the delay time will be 15 seconds
+    - For 10th to 30th iterations, the delay time will be 30 seconds
+    - For rest of iterations, the delay time will be 120 seconds
+
+- As an alternative to the incremental delay preset, there are other options for setting granular delays:
+    - 1º Setting a static delay with `staticDelay(x)` where `x` represents the delay in seconds
+    - 2º Building a custom incremental delay by using `addDelay`. By using it, we specify the delay in seconds until a specific iteration, i.e:
+        - `.addDelay(5, 10)` Until 5th iteration, the delay will be 10 seconds
+        - `.addDelay(10, 20)` Until 10th iteration, the delay will be 20 seconds (does not overwrite the first 5 iterations delay)
+        - `.addDelay(30, 180)` Until 30th iteration, the delay will be 180 seconds (does not overwrite the first 10 iterations delay). As this is the final delay, will be taken into account even if the iteration is > 30, until `timeout` is reached.
+        - Note: Delays will be sorted automatically in ascending order, by nº of iterations, i.e 5-10-30
