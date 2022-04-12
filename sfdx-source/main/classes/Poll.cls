@@ -1,11 +1,14 @@
 public with sharing class Poll implements Schedulable {
-    private Configuration configuration;
+    @TestVisible
     private Integer iteration;
+    private Configuration configuration;
 
     // CONSTRUCTORS
 
-    public Poll(Configuration configuration) {
-        this.configuration = configuration;
+    public Poll(Callable instance) {
+        this.configuration = new Configuration();
+
+        this.configuration.pollInstance = instance;
         this.iteration = 1;
     }
 
@@ -16,9 +19,49 @@ public with sharing class Poll implements Schedulable {
 
     // PUBLIC
 
-    public void execute() {
-        configuration.beginning(Datetime.now());
+    public Poll untilTrue(Callable instance) {
+        this.configuration.checkCompletionInstance = instance;
 
+        return this;
+    }
+
+    public Poll then(Callable instance) {
+        this.configuration.callbackInstance = instance;
+
+        return this;
+    }
+
+    public Poll beginning(Datetime timing) {
+        this.configuration.startTime = timing;
+
+        return this;
+    }
+
+    public Poll timeout(Integer seconds) {
+        this.configuration.timeout = seconds;
+
+        return this;
+    }
+
+    public Poll staticDelay(Integer delayInSeconds) {
+        return this.addDelay(1, delayInSeconds);
+    }
+
+    public Poll incrementalDelaysPreset() {
+        return this.addDelay(10, 15)
+            .addDelay(30, 30)
+            .addDelay(100, 120);
+    }
+
+    public Poll addDelay(Integer upperIteration, Integer delayInSeconds) {
+        if (this.configuration.incremDelays == null) {
+            this.configuration.incremDelays = new List<IncrementalDelay>();
+        }
+        this.configuration.incremDelays.add(new IncrementalDelay(upperIteration, delayInSeconds));
+        return this;
+    }
+
+    public void execute() {
         execute(null);
     }
 
@@ -26,60 +69,26 @@ public with sharing class Poll implements Schedulable {
         System.enqueueJob(new PollAsync(configuration, iteration));
     }
 
+
     // INNER
 
     public with sharing class Configuration {
-        public String pollClass { get; private set; }
-        public String checkCompletionClass { get; private set; }
-        public String callbackClass { get; private set; }
-        public List<IncrementalDelay> incremDelays { get; private set; }
-        public Datetime startTime { get; private set; }
-        public Integer timeout { get; private set; }
-    
-        // PUBLIC
-    
-        public Configuration pollWith(String className) {
-            this.pollClass = className;
-    
-            return this;
-        }
-    
-        public Configuration untilTrue(String className) {
-            this.checkCompletionClass = className;
-    
-            return this;
-        }
-    
-        public Configuration then(String className) {
-            this.callbackClass = className;
-    
-            return this;
-        }
-    
-        public Configuration beginning(Datetime timing) {
-            this.startTime = timing;
-    
-            return this;
-        }
-    
-        public Configuration timeout(Integer seconds) {
-            this.timeout = seconds;
-    
-            return this;
-        }
-    
-        public Configuration addDelay(Integer upperIteration, Integer delayInSeconds) {
-            if (this.incremDelays == null) {
-                this.incremDelays = new List<IncrementalDelay>();
-            }
-            this.incremDelays.add(new IncrementalDelay(upperIteration, delayInSeconds));
-            return this;
+        private Callable pollInstance { get; private set; }
+        private Callable checkCompletionInstance { get; private set; }
+        private Callable callbackInstance { get; private set; }
+        private List<IncrementalDelay> incremDelays { get; private set; }
+        private Datetime startTime { get; private set; }
+        private Integer timeout { get; private set; }
+
+        public Configuration() {
+            this.startTime = Datetime.now();
+            this.timeout = 86400;
         }
     }
 
     private with sharing class IncrementalDelay implements Comparable {
-        public Integer delayInSeconds;
-        public Integer upperIteration;
+        private Integer delayInSeconds;
+        private Integer upperIteration;
 
         public IncrementalDelay(Integer upperIteration, Integer delayInSeconds) {
             this.delayInSeconds = delayInSeconds;
@@ -111,11 +120,11 @@ public with sharing class Poll implements Schedulable {
             PollAsyncFinalizer finalizer = new PollAsyncFinalizer(this);
             System.attachFinalizer(finalizer);
     
-            Object pollResponse = invokeClass(configuration.pollClass, null);
-            Boolean completed = (Boolean) invokeClass(configuration.checkCompletionClass, pollResponse);
+            Object pollResponse = invokeClass(configuration.pollInstance, null);
+            Boolean completed = (Boolean) invokeClass(configuration.checkCompletionInstance, pollResponse);
     
             if (completed) {
-                invokeClass(configuration.callbackClass, pollResponse);
+                invokeClass(configuration.callbackInstance, pollResponse);
             } else {
                 scheduleAgain();
             }
@@ -123,24 +132,10 @@ public with sharing class Poll implements Schedulable {
     
         // PRIVATE
     
-        private Object invokeClass(String className, Object args) {
-            Type callbackClass = typeByName(className);
-            return ((Callable) callbackClass.newInstance()).call('', new Map<String, Object>{ 'default' => args });
+        private Object invokeClass(Callable instance, Object args) {
+            return instance.call('', new Map<String, Object>{ 'default' => args });
         }
-    
-        private Type typeByName(String fullClassName) {
-            String namespace = fullClassName.contains('.') ? fullClassName.substringBefore('.') : '';
-            String className = fullClassName.contains('.') ? fullClassName.substringAfter('.') : fullClassName;
-    
-            Type result = Type.forName(namespace, className);
-    
-            if (result == null) {
-                throw new PollingException('Invalid class ' + fullClassName);
-            }
-    
-            return result;
-        }
-    
+
         private void scheduleAgain() {
             try {
                 String nextFireCron = calculateNextFireCron(iteration, configuration);

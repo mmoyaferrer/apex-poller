@@ -1,19 +1,20 @@
 @isTest
 private class PollTest {
+
     @isTest
     private static void execute() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration();
-
-        String mockCalloutResponse = '{"Status": "Completed"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        new HttpMock()
+            .get('', new Response('Completed'))
+            .mock();
 
         // Exercise
         Test.startTest();
-        new Poll(configuration).execute();
+            new Poll(new MockPollAction())
+                .untilTrue(new MockCompletionChecker())
+                .then(new MockCallback())
+                .addDelay(1, 5)
+                .execute();
         Test.stopTest();
 
         // Verify
@@ -26,22 +27,21 @@ private class PollTest {
     @isTest
     private static void schedule() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration();
+        new HttpMock()
+            .get('', new Response('Completed'))
+            .mock();
 
-        String mockCalloutResponse = '{"Status": "Completed"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
-
-        Poll testScheduledPoll = new Poll(configuration);
+       Poll testScheduledPoll = new Poll(new MockPollAction())
+            .untilTrue(new MockCompletionChecker())
+            .then(new MockCallback())
+            .addDelay(1, 5);
 
         // Note: Because this is a test, job executes immediately after Test.stopTest()
         String nextFireTime = '0 0 0 15 3 ? 2099';
 
         // Exercise
         Test.startTest();
-        System.schedule('Polling - ' + nextFireTime, nextFireTime, testScheduledPoll);
+            System.schedule('Polling - ' + nextFireTime, nextFireTime, testScheduledPoll);
         Test.stopTest();
 
         // Verify
@@ -49,19 +49,85 @@ private class PollTest {
     }
 
     @isTest
-    private static void rescheduleFirstIteration() {
+    private static void rescheduleWithStaticDelay() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration();
-
-        String mockCalloutResponse = '{"Status": "In Progress"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
 
         // Exercise
         Test.startTest();
-        System.enqueueJob(new Poll.PollAsync(configuration, 1));
+            new Poll(new MockPollAction())
+                .untilTrue(new MockCompletionChecker())
+                .then(new MockCallback())
+                .staticDelay(100)
+                .execute();
+        Test.stopTest();
+
+        // Verify
+        Datetime now = Datetime.now();
+        System.assertEquals(now.addSeconds(100), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+    }
+
+    @isTest
+    private static void rescheduleFirstIterationWithIncrementalPreset() {
+        // Setup
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
+
+        // Exercise
+        Test.startTest();
+            new Poll(new MockPollAction())
+                .untilTrue(new MockCompletionChecker())
+                .then(new MockCallback())
+                .incrementalDelaysPreset()
+                .execute();
+        Test.stopTest();
+
+        // Verify
+        Datetime now = Datetime.now();
+        System.assertEquals(now.addSeconds(15), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+    }
+
+    @isTest
+    private static void reschedule20IterationWithIncrementalPreset() {
+        // Setup
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
+
+        Poll polling = new Poll(new MockPollAction())
+            .untilTrue(new MockCompletionChecker())
+            .then(new MockCallback())
+            .incrementalDelaysPreset();
+
+        polling.iteration = 20;
+
+        // Exercise
+        Test.startTest();
+            polling.execute();
+        Test.stopTest();
+
+        // Verify
+        Datetime now = Datetime.now();
+        System.assertEquals(now.addSeconds(30), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+    }
+
+    @isTest
+    private static void rescheduleFirstIteration() {
+        // Setup
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
+
+        // Exercise
+        Test.startTest();
+            new Poll(new MockPollAction())
+                .untilTrue(new MockCompletionChecker())
+                .then(new MockCallback())
+                .addDelay(1, 5)
+                .execute();
         Test.stopTest();
 
         // Verify
@@ -72,17 +138,21 @@ private class PollTest {
     @isTest
     private static void rescheduleThirdIteration() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration();
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
 
-        String mockCalloutResponse = '{"Status": "In Progress"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        Poll polling = new Poll(new MockPollAction())
+            .untilTrue(new MockCompletionChecker())
+            .then(new MockCallback())
+            .addDelay(1, 5)
+            .addDelay(3, 15);
+
+        polling.iteration = 3;
 
         // Exercise
         Test.startTest();
-        System.enqueueJob(new Poll.PollAsync(configuration, 3));
+            polling.execute();
         Test.stopTest();
 
         // Verify
@@ -93,17 +163,21 @@ private class PollTest {
     @isTest
     private static void rescheduleUnexpectedIterationBeforeTimeout() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration();
-
-        String mockCalloutResponse = '{"Status": "In Progress"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
+        
+        Poll polling = new Poll(new MockPollAction())
+            .untilTrue(new MockCompletionChecker())
+            .then(new MockCallback())
+            .addDelay(1, 5)
+            .addDelay(3, 15)
+            .addDelay(15, 30);
+        polling.iteration = 100;
 
         // Exercise
         Test.startTest();
-        System.enqueueJob(new Poll.PollAsync(configuration, 100));
+            polling.execute();
         Test.stopTest();
 
         // Verify
@@ -114,19 +188,20 @@ private class PollTest {
     @isTest
     private static void rescheduleReachesTimeout() {
         // Setup
-        Poll.Configuration configuration = createPollConfiguration().timeout(0);
-
-        String mockCalloutResponse = '{"Status": "In Progress"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        new HttpMock()
+            .get('', new Response('In Progress'))
+            .mock();
 
         // Exercise
         Poll.PollingException ex;
         try {
             Test.startTest();
-            System.enqueueJob(new Poll.PollAsync(configuration, 1));
+                new Poll(new MockPollAction())
+                    .untilTrue(new MockCompletionChecker())
+                    .then(new MockCallback())
+                    .timeout(0)
+                    .addDelay(1, 5)
+                    .execute();   
             Test.stopTest();
         } catch (Poll.PollingException e) {
             ex = e;
@@ -139,19 +214,19 @@ private class PollTest {
     @isTest
     private static void executeHitsLimitsAndReschedule() {
         // Setup
-        Poll.Configuration configuration = createPollConfigurationForException();
-
-        String mockCalloutResponse = '{"Status": "Completed"}';
-        Test.setMock(
-            HttpCalloutMock.class,
-            new MockCalloutResponseGenerator().withSuccessfullResponse(mockCalloutResponse)
-        );
+        new HttpMock()
+            .get('', new Response('Completed'))
+            .mock();
 
         // Exercise
         DmlException ex;
         try {
             Test.startTest();
-            System.enqueueJob(new Poll.PollAsync(configuration, 1));
+                new Poll(new MockPollActionLimit())
+                    .untilTrue(new MockCompletionChecker())
+                    .then(new MockCallback())
+                    .addDelay(1, 5)
+                    .execute();  
             Test.stopTest();
         } catch (DmlException e) {
             ex = e;
@@ -166,29 +241,11 @@ private class PollTest {
         System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
     }
 
-    private static Poll.Configuration createPollConfiguration() {
-        return new Poll.Configuration()
-            .pollWith('MockPollAction')
-            .untilTrue('MockCompletionChecker')
-            .then('MockCallback')
-            .beginning(Datetime.now())
-            .timeout(86400)
-            .addDelay(1, 5)
-            .addDelay(3, 15)
-            .addDelay(5, 25)
-            .addDelay(15, 30);
-    }
+    private class Response {
+        private String status;
 
-    private static Poll.Configuration createPollConfigurationForException() {
-        return new Poll.Configuration()
-            .pollWith('MockPollActionLimit')
-            .untilTrue('MockCompletionChecker')
-            .then('MockCallback')
-            .beginning(Datetime.now())
-            .timeout(86400)
-            .addDelay(1, 5)
-            .addDelay(3, 15)
-            .addDelay(5, 25)
-            .addDelay(15, 30);
+        public Response(String status) {
+            this.status = status;
+        }
     }
 }
