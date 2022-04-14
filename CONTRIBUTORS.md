@@ -2,6 +2,6 @@
 
 ## Special thanks for all the people who had helped in this project:
 
-* [Gabriel Serrano Salas](https://github.com/jdkgabri)
-* [Mert Yalti](https://github.com/DevKein)
-* [Robert Sösemann](https://github.com/rsoesemann)
+-   [Gabriel Serrano Salas](https://github.com/jdkgabri)
+-   [Mert Yalti](https://github.com/DevKein)
+-   [Robert Sösemann](https://github.com/rsoesemann)
