@@ -19,7 +19,6 @@ new Poll(new RequestNumber())
     .then(new CorrectNumberCallback())
     .incrementalDelaysPreset()
     .execute();
-).execute();
 ```
 Where:
 - By `pollWith` we specify the polling logic:
