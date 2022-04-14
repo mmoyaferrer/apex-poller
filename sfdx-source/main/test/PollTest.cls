@@ -65,8 +65,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(100), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(100);
     }
 
     @isTest
@@ -86,8 +85,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(15), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(15);
     }
 
     @isTest
@@ -110,8 +108,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(30), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(30);
     }
 
     @isTest
@@ -131,9 +128,10 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(5), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(5);
     }
+
+    
 
     @isTest
     private static void rescheduleThirdIteration() {
@@ -156,8 +154,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(15), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(15);
     }
 
     @isTest
@@ -181,8 +178,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        Datetime now = Datetime.now();
-        System.assertEquals(now.addSeconds(30), [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime);
+        assertNextFireTime(30);
     }
 
     @isTest
@@ -239,6 +235,18 @@ private class PollTest {
 
         Datetime now = Datetime.now();
         System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+    }
+
+    private static void assertNextFireTime(Integer secondsFromNow) {
+        Datetime now = Datetime.now();
+        Datetime nextFireTime = [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime;
+
+        // Note: Asserted time could be +-1 second due to processing time. The following assert takes that into account to give robustness to unit tests.
+        System.assert(
+            now.addSeconds(secondsFromNow).format('MM/dd/yyyy HH:mm:ss') == nextFireTime.format('MM/dd/yyyy HH:mm:ss') ||
+            now.addSeconds(secondsFromNow + 1).format('MM/dd/yyyy HH:mm:ss') == nextFireTime.format('MM/dd/yyyy HH:mm:ss') ||
+            now.addSeconds(secondsFromNow - 1).format('MM/dd/yyyy HH:mm:ss') == nextFireTime.format('MM/dd/yyyy HH:mm:ss')
+        );
     }
 
     private class Response {
