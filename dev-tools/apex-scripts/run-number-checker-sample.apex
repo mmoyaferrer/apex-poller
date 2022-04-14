@@ -1,11 +1,22 @@
-PollConfiguration configuration = new PollConfiguration()
-    .withPollAction('RequestNumber')
-    .withCompletionChecker('NumberChecker')
-    .withCallbackAction('CorrectNumberCallback')
-    .withTimeout(86400)
-    .withIncrementalDelay(new PollConfiguration.IncrementalDelay()
-        .withInitialIterations(10, 1)
-        .withMiddleIterations(30, 2)
-        .withFinalIterations(60));
+// #1 - With Incremental Delays Preset
+new Poll(new RequestNumber())
+    .untilTrue(new NumberChecker())
+    .then(new CorrectNumberCallback())
+    .incrementalDelaysPreset()
+    .execute();
 
-new Poller(configuration).execute();
+// #2 - With Custom Incremental Delays
+new Poll(new RequestNumber())
+    .untilTrue(new NumberChecker())
+    .then(new CorrectNumberCallback())
+    .addDelay(1, 10)
+    .addDelay(5, 20)
+    .addDelay(30, 180)
+    .execute();
+
+// #3 - With Static Delay
+new Poll(new RequestNumber())
+    .untilTrue(new NumberChecker())
+    .then(new CorrectNumberCallback())
+    .staticDelay(15)
+    .execute();
