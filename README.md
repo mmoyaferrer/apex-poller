@@ -21,7 +21,7 @@ new Poll(new RequestNumber())
     .execute();
 ```
 Where:
-- By `pollWith` we specify the polling logic:
+- By `Poll` constructor, we specify the run polling logic:
 
 ```
 public with sharing class RequestNumber implements Callable {
