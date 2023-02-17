@@ -21,7 +21,7 @@ private class PollTest {
         System.assertEquals(1, [SELECT COUNT() FROM Account]);
 
         Datetime now = Datetime.now();
-        System.assertEquals(0, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+        System.assertEquals(0, [SELECT COUNT() FROM CronTrigger WHERE CronJobDetail.Name LIKE 'Apex Poller - %' AND NextFireTime > :now]);
     }
 
     @isTest
@@ -189,22 +189,17 @@ private class PollTest {
             .mock();
 
         // Exercise
-        Poll.PollingException ex;
-        try {
-            Test.startTest();
-                new Poll(new MockPollAction())
-                    .untilTrue(new MockCompletionChecker())
-                    .then(new MockCallback())
-                    .timeout(0)
-                    .addDelay(1, 5)
-                    .execute();   
-            Test.stopTest();
-        } catch (Poll.PollingException e) {
-            ex = e;
-        }
+        Test.startTest();
+            new Poll(new MockPollAction())
+                .untilTrue(new MockCompletionChecker())
+                .then(new MockCallback())
+                .timeout(0)
+                .addDelay(1, 5)
+                .execute();   
+        Test.stopTest();
 
         // Verify
-        System.assertEquals('Polling timeout reached', ex.getMessage());
+        System.assertEquals(0, [SELECT COUNT() FROM CronTrigger WHERE CronJobDetail.Name LIKE 'Apex Poller - %']);
     }
 
     @isTest
@@ -234,12 +229,12 @@ private class PollTest {
         System.assertEquals(0, [SELECT COUNT() FROM Account]);
 
         Datetime now = Datetime.now();
-        System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+        System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE CronJobDetail.Name LIKE 'Apex Poller - %' AND NextFireTime > :now]);
     }
 
     private static void assertNextFireTime(Integer secondsFromNow) {
         Datetime now = Datetime.now();
-        Datetime nextFireTime = [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime;
+        Datetime nextFireTime = [SELECT NextFireTime FROM CronTrigger WHERE CronJobDetail.Name LIKE 'Apex Poller - %' AND NextFireTime > :now].NextFireTime;
 
         // Note: Asserted time could be +-1 second due to processing time. The following assert takes that into account to give robustness to unit tests.
         System.assert(

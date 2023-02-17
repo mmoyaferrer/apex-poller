@@ -120,11 +120,11 @@ public with sharing class Poll implements Schedulable {
             PollAsyncFinalizer finalizer = new PollAsyncFinalizer(this);
             System.attachFinalizer(finalizer);
     
-            Object pollResponse = invokeClass(configuration.pollInstance, null);
-            Boolean completed = (Boolean) invokeClass(configuration.checkCompletionInstance, pollResponse);
+            Object pollResponse = invokeClass(configuration.pollInstance, 'default', null);
+            Boolean completed = (Boolean) invokeClass(configuration.checkCompletionInstance, 'default', pollResponse);
     
             if (completed) {
-                invokeClass(configuration.callbackInstance, pollResponse);
+                invokeClass(configuration.callbackInstance, 'default', pollResponse);
             } else {
                 scheduleAgain();
             }
@@ -132,17 +132,20 @@ public with sharing class Poll implements Schedulable {
     
         // PRIVATE
     
-        private Object invokeClass(Callable instance, Object args) {
-            return instance.call('', new Map<String, Object>{ 'default' => args });
+        private Object invokeClass(Callable instance, String key, Object args) {
+            return instance.call('', new Map<String, Object>{ key => args });
         }
 
         private void scheduleAgain() {
             try {
-                String nextFireCron = calculateNextFireCron(iteration, configuration);
-    
-                iteration++;
-                Poll scheduledPoll = new Poll(configuration, iteration);
-                System.schedule('Polling - ' + nextFireCron, nextFireCron, scheduledPoll);
+                Datetime now = Datetime.now();
+                if(validateTimeout(configuration, now)){
+                    String nextFireCron = calculateNextFireCron(iteration, configuration, now);
+        
+                    iteration++;
+                    Poll scheduledPoll = new Poll(configuration, iteration);
+                    System.schedule('Apex Poller - ' + nextFireCron, nextFireCron, scheduledPoll);
+                }
             } catch (AsyncException ex) {
                 if (!Test.isRunningTest()) {
                     throw ex;
@@ -150,10 +153,7 @@ public with sharing class Poll implements Schedulable {
             }
         }
     
-        private String calculateNextFireCron(Integer iteration, Configuration configuration) {
-            Datetime now = Datetime.now();
-            validateTimeout(configuration, now);
-
+        private String calculateNextFireCron(Integer iteration, Configuration configuration, Datetime now) {
             List<IncrementalDelay> incrementalDelays = configuration.incremDelays;
             incrementalDelays.sort();
     
@@ -162,20 +162,23 @@ public with sharing class Poll implements Schedulable {
                 IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
                 nextTime = now.addSeconds(nextDelay.delayInSeconds);
             } else {
-                throw new PollingException('Delay/s not defined');
+                invokeClass(configuration.callbackInstance, 'error', (Object) 'Delay/s not defined');
             }
 
             return cronFrom(nextTime);
         }
     
-        private void validateTimeout(Configuration configuration, Datetime now) {
+        private Boolean validateTimeout(Configuration configuration, Datetime now) {
+            Boolean valid = true;
             Long nowMs = now.getTime();
             Long startTimeMs = configuration.startTime.getTime();
     
             Integer differenceSeconds = (Integer) ((nowMs - startTimeMs) / 1000);
             if (differenceSeconds >= configuration.timeout) {
-                throw new PollingException('Polling timeout reached');
+                invokeClass(configuration.callbackInstance, 'error', (Object) 'Polling timeout reached');
+                valid = false;
             }
+            return valid;
         }
     
         private IncrementalDelay nextDelay(
