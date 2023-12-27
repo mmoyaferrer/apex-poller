@@ -21,7 +21,17 @@ private class PollTest {
         System.assertEquals(1, [SELECT COUNT() FROM Account]);
 
         Datetime now = Datetime.now();
-        System.assertEquals(0, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+        System.assertEquals(0, [
+            SELECT
+                COUNT()
+            FROM
+                CronTrigger
+            WHERE
+                NextFireTime > :now 
+                AND
+                CronJobDetail.Name LIKE 'Polling -%'
+            ]
+        );
     }
 
     @isTest
@@ -45,7 +55,7 @@ private class PollTest {
         Test.stopTest();
 
         // Verify
-        System.assertEquals(2, [SELECT COUNT() FROM AsyncApexJob]);
+        System.assertEquals(2, [SELECT COUNT() FROM AsyncApexJob WHERE ApexClass.Name = 'Poll']);
     }
 
     @isTest
@@ -234,12 +244,31 @@ private class PollTest {
         System.assertEquals(0, [SELECT COUNT() FROM Account]);
 
         Datetime now = Datetime.now();
-        System.assertEquals(1, [SELECT COUNT() FROM CronTrigger WHERE NextFireTime > :now]);
+        System.assertEquals(1, [
+            SELECT
+                COUNT()
+            FROM
+                CronTrigger
+            WHERE
+                NextFireTime > :now 
+                AND
+                CronJobDetail.Name LIKE 'Polling -%'
+            ]
+        );
     }
 
     private static void assertNextFireTime(Integer secondsFromNow) {
         Datetime now = Datetime.now();
-        Datetime nextFireTime = [SELECT NextFireTime FROM CronTrigger WHERE NextFireTime > :now].NextFireTime;
+        Datetime nextFireTime = [
+            SELECT
+                NextFireTime
+            FROM
+                CronTrigger
+            WHERE
+                NextFireTime > :now 
+                AND
+                CronJobDetail.Name LIKE 'Polling -%'
+            ].NextFireTime;
 
         // Note: Asserted time could be +-1 second due to processing time. The following assert takes that into account to give robustness to unit tests.
         System.assert(
