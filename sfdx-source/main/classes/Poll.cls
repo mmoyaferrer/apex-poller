@@ -37,6 +37,7 @@ public with sharing class Poll implements Schedulable {
         return this;
     }
 
+    // Note: Use -1 for infinite process, but be careful to set an exit condition in untilTrue method
     public Poll timeout(Integer seconds) {
         this.configuration.timeout = seconds;
 
@@ -49,8 +50,8 @@ public with sharing class Poll implements Schedulable {
 
     public Poll incrementalDelaysPreset() {
         return this.addDelay(10, 15)
-            .addDelay(30, 30)
-            .addDelay(100, 120);
+                .addDelay(30, 30)
+                .addDelay(100, 120);
     }
 
     public Poll addDelay(Integer upperIteration, Integer delayInSeconds) {
@@ -105,33 +106,35 @@ public with sharing class Poll implements Schedulable {
     private with sharing class PollAsync implements Queueable, Database.AllowsCallouts {
         private Configuration configuration;
         private Integer iteration;
-    
+
         // CONSTRUCTOR
-    
+
         public PollAsync(Configuration configuration, Integer iteration) {
             this.configuration = configuration;
             this.iteration = iteration;
         }
-    
+
         // PUBLIC
 
 
         public void execute(QueueableContext context) {
             PollAsyncFinalizer finalizer = new PollAsyncFinalizer(this);
             System.attachFinalizer(finalizer);
-    
+
             Object pollResponse = invokeClass(configuration.pollInstance, null);
             Boolean completed = (Boolean) invokeClass(configuration.checkCompletionInstance, pollResponse);
-    
+
             if (completed) {
-                invokeClass(configuration.callbackInstance, pollResponse);
+                if (configuration.callbackInstance != null) {
+                    invokeClass(configuration.callbackInstance, pollResponse);
+                }
             } else {
                 scheduleAgain();
             }
         }
-    
+
         // PRIVATE
-    
+
         private Object invokeClass(Callable instance, Object args) {
             return instance.call('', new Map<String, Object>{ 'default' => args });
         }
@@ -139,7 +142,7 @@ public with sharing class Poll implements Schedulable {
         private void scheduleAgain() {
             try {
                 String nextFireCron = calculateNextFireCron(iteration, configuration);
-    
+
                 iteration++;
                 Poll scheduledPoll = new Poll(configuration, iteration);
                 System.schedule('Polling - ' + nextFireCron, nextFireCron, scheduledPoll);
@@ -149,14 +152,14 @@ public with sharing class Poll implements Schedulable {
                 }
             }
         }
-    
+
         private String calculateNextFireCron(Integer iteration, Configuration configuration) {
             Datetime now = Datetime.now();
             validateTimeout(configuration, now);
 
             List<IncrementalDelay> incrementalDelays = configuration.incremDelays;
             incrementalDelays.sort();
-    
+
             Datetime nextTime;
             if (incrementalDelays != null && incrementalDelays.size() > 0) {
                 IncrementalDelay nextDelay = nextDelay(iteration, incrementalDelays);
@@ -167,39 +170,41 @@ public with sharing class Poll implements Schedulable {
 
             return cronFrom(nextTime);
         }
-    
+
         private void validateTimeout(Configuration configuration, Datetime now) {
-            Long nowMs = now.getTime();
-            Long startTimeMs = configuration.startTime.getTime();
-    
-            Integer differenceSeconds = (Integer) ((nowMs - startTimeMs) / 1000);
-            if (differenceSeconds >= configuration.timeout) {
-                throw new PollingException('Polling timeout reached');
+            if (configuration.timeout != -1) {
+                Long nowMs = now.getTime();
+                Long startTimeMs = configuration.startTime.getTime();
+
+                Integer differenceSeconds = (Integer) ((nowMs - startTimeMs) / 1000);
+                if (differenceSeconds >= configuration.timeout) {
+                    throw new PollingException('Polling timeout reached');
+                }
             }
         }
-    
+
         private IncrementalDelay nextDelay(
-            Integer iteration,
-            List<IncrementalDelay> incrementalDelays
+                Integer iteration,
+                List<IncrementalDelay> incrementalDelays
         ) {
-    
+
             IncrementalDelay result;
-     
+
             for (IncrementalDelay delay : incrementalDelays) {
                 if (delay.upperIteration >= iteration) {
                     result = delay;
                     break;
                 }
             }
-    
+
             return result != null ? result : incrementalDelays[incrementalDelays.size() - 1];
         }
-    
+
         private String cronFrom(Datetime dateItem) {
             return dateItem.second() + ' ' + dateItem.minute() + ' ' + dateItem.hour() + ' ' + dateItem.day() + ' ' + dateItem.month() + ' ' + '?' + ' ' + dateItem.year();
         }
-    
-    }    
+
+    }
 
     private with sharing class PollAsyncFinalizer implements Finalizer {
         private PollAsync outerClass;
